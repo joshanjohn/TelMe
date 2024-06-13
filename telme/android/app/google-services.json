@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "464644665028",
+    "project_id": "telme-app",
+    "storage_bucket": "telme-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464644665028:android:22ab7d573eff9746cc6391",
+        "android_client_info": {
+          "package_name": "com.example.telme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxU2sRSUV4IbiHpjqJhAaGzRQDhklpySk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
