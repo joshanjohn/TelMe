@@ -1,7 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/auth_service.dart';
 
 class Authenticate extends StatefulWidget {
   const Authenticate({super.key});
@@ -12,34 +10,21 @@ class Authenticate extends StatefulWidget {
 }
 
 class _AuthenticateState extends State<Authenticate> {
+  final AuthService _authService = AuthService();
   //controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  String _errorMessage = 'test';
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final String _errorMessage = 'test';
 
 
-  Future<void> _login() async{
-    try{
-      //try get credentials from supplied email and password
-      UserCredential credential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      //just a test to see if we were able to login
-      setState((){_errorMessage="you have logged in. welcome!";});
-    }catch(err){
-      setState((){_errorMessage=err.toString();});
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: const Text('Login'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -48,22 +33,24 @@ class _AuthenticateState extends State<Authenticate> {
           children: [
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _login,
-              child: Text('Login'),
+              onPressed:()async{
+                await  _authService.login(_emailController.text.trim(),_passwordController.text.trim());
+              },
+              child: const Text('Login'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               _errorMessage,
-              style: TextStyle(color: Colors.red),
+              style: const TextStyle(color: Colors.red),
             ),
           ],
         ),
