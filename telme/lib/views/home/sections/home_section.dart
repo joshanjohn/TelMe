@@ -23,12 +23,14 @@ class _HomeSectionState extends State<HomeSection> {
         backgroundColor: Colors.black26,
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Joshan John", style: _themeData.textTheme.titleLarge),
+            Text("Naiomi Jerry", style: _themeData.textTheme.titleLarge),
             Expanded(
               child: GestureDetector(
                 onLongPress: () {
@@ -41,7 +43,7 @@ class _HomeSectionState extends State<HomeSection> {
                     alignment: Alignment.center,
                     children: [
                       AnimatedContainer(
-                        duration: Duration(seconds: 1),
+                        duration: Duration(milliseconds: 300),
                         width: 320,
                         height: 320,
                         decoration: BoxDecoration(
