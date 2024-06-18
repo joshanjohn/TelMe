@@ -7,6 +7,7 @@ class Wrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //return Authentification or Home screen depending on if user is logged in
     return const Placeholder();
   }
 }
