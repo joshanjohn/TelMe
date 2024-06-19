@@ -10,6 +10,7 @@ class Authenticate extends StatefulWidget {
 }
 
 class _AuthenticateState extends State<Authenticate> {
+  final AuthService _authService = AuthService();
   //controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -110,7 +111,7 @@ class _AuthenticateState extends State<Authenticate> {
                     ElevatedButton(
                       onPressed: () {
                         if (_authKey.currentState!.validate()) {
-                          login(_emailController.text.trim(),
+                          _authService.login(_emailController.text.trim(),
                               _passwordController.text.trim(), context);
                         }
                       },
