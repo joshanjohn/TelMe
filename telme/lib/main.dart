@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:telme/views/wrapper.dart';
-
+import 'package:telme/views/auth/authenticate.dart';
+import 'package:telme/views/constants/dart_theme.dart';
+import 'package:telme/views/constants/light_theme.dart';
+import 'package:telme/views/home/home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,14 +18,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/',
+      routes: {
+        '/home': (context) => Home(),
+        '/': (context) => Authenticate(),
+      },
       title: 'Flutter Demo',
-      theme: ThemeData(
-
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const Wrapper(),
+      darkTheme: DarkTheme(),
+      theme: LightTheme(),
     );
   }
+  
 }
-
