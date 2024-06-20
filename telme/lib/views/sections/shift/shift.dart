@@ -12,16 +12,19 @@ class _ShiftSectionState extends State<ShiftSection> {
   Widget build(BuildContext context) {
     final _themeData = Theme.of(context);
     return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            "Shift",
-            style: _themeData.textTheme.displayMedium!
-                .copyWith(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.black26,
+      appBar: AppBar(
+        title: Text(
+          "Shift",
+          style: _themeData.textTheme.displayMedium!
+              .copyWith(fontWeight: FontWeight.bold),
         ),
-        body: Container(
-          child: Center(child: Text("Shift")),
-        ));
+        backgroundColor: Colors.black26,
+      ),
+      body: Container(
+        child: ListView(
+          children: [],
+        ),
+      ),
+    );
   }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:telme/views/auth/authenticate.dart';
-import 'package:telme/views/constants/dart_theme.dart';
-import 'package:telme/views/constants/light_theme.dart';
-import 'package:telme/views/home/home.dart';
+import 'package:telme/constants/dart_theme.dart';
+import 'package:telme/constants/light_theme.dart';
+import 'package:telme/views/sections/wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,5 +29,4 @@ class MyApp extends StatelessWidget {
       theme: LightTheme(),
     );
   }
-  
 }

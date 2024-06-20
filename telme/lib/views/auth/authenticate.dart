@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:telme/services/auth_service.dart';
+import 'package:telme/services/auth/auth_service.dart';
 
 class Authenticate extends StatefulWidget {
   const Authenticate({super.key});

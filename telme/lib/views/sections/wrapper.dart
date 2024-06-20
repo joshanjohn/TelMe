@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:telme/views/home/sections/home_section.dart';
-import 'package:telme/views/home/sections/shift_section.dart';
+import 'package:telme/views/sections/home/home.dart';
+import 'package:telme/views/sections/shift/shift.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
