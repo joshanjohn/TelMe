@@ -16,7 +16,7 @@ class AuthService {
       if (credential != null) {
         Navigator.pushReplacementNamed(
           context,
-          '/home',
+          '/wrapper',
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -25,5 +25,9 @@ class AuthService {
         SnackBar(content: Text(errors[1])),
       );
     }
+  }
+
+  Future<void> logout() async {
+     _auth.signOut();
   }
 }

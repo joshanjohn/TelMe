@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:telme/services/auth/auth_service.dart';
+import 'package:telme/views/sections/home/widgets/clock_button.dart';
 
 class HomeSection extends StatefulWidget {
   const HomeSection({super.key});
@@ -8,6 +10,7 @@ class HomeSection extends StatefulWidget {
 }
 
 class _HomeSectionState extends State<HomeSection> {
+  // a flag indicator for changing color
   bool isGreen = false;
 
   @override
@@ -15,6 +18,17 @@ class _HomeSectionState extends State<HomeSection> {
     final _themeData = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          IconButton(
+            onPressed: () {
+              AuthService().logout().then((value) =>
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, '/', (route) => false));
+            },
+            icon: Icon(Icons.logout_outlined, size: 26,),
+          ), 
+          SizedBox(width: 20,)
+        ],
         title: Text(
           "Home",
           style: _themeData.textTheme.displayMedium!
@@ -30,61 +44,11 @@ class _HomeSectionState extends State<HomeSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // name of the person
             Text("Naiomi Jerry", style: _themeData.textTheme.titleLarge),
+            // ClockButton
             Expanded(
-              child: GestureDetector(
-                onLongPress: () {
-                  setState(() {
-                    isGreen = !isGreen;
-                  });
-                },
-                child: Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedContainer(
-                        duration: Duration(milliseconds: 300),
-                        width: 320,
-                        height: 320,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: isGreen
-                                ? [
-                                    Colors.green[900]!,
-                                    Colors.green[700]!,
-                                    Colors.green[500]!,
-                                    Colors.green[300]!,
-                                  ]
-                                : [
-                                    Colors.red[900]!,
-                                    Colors.red[300]!,
-                                    Colors.red[700]!,
-                                    Colors.red[500]!,
-                                  ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
-                      AnimatedContainer(
-                        duration: Duration(seconds: 1),
-                        width: 280,
-                        height: 280,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isGreen ? Colors.green[200] : Colors.red[200],
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Clock Out",
-                          style: TextStyle(color: Colors.white, fontSize: 24),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              child: ClockButton(),
             ),
           ],
         ),
