@@ -19,6 +19,8 @@ class _RegisterState extends State<Register> {
   final _regKey = GlobalKey<FormState>();
   final AuthService _auth = AuthService();
 
+
+  // register function 
   void _register() async {
     if (_regKey.currentState!.validate()) {
       UserModel user = UserModel(
