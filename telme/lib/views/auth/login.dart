@@ -1,42 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:telme/services/auth/auth_service.dart';
 
-class Authenticate extends StatefulWidget {
-  const Authenticate({super.key});
+class Login extends StatefulWidget {
+  const Login({super.key});
 
   @override
-  State<Authenticate> createState() => _AuthenticateState();
+  State<Login> createState() => _LoginState();
 }
 
-class _AuthenticateState extends State<Authenticate> {
+class _LoginState extends State<Login> {
   final AuthService _authService = AuthService();
   //controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   final _authKey = GlobalKey<FormState>();
-
-  // String _errorMessage = 'test';
-
-  // final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Future<void> _login() async {
-  //   try {
-  //     //try get credentials from supplied email and password
-  //     UserCredential credential = await _auth.signInWithEmailAndPassword(
-  //       email: _emailController.text.trim(),
-  //       password: _passwordController.text.trim(),
-  //     );
-  //     //just a test to see if we were able to login
-  //     setState(() {
-  //       _errorMessage = "you have logged in. welcome!";
-  //     });
-  //   } catch (err) {
-  //     setState(() {
-  //       _errorMessage = err.toString();
-  //     });
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +26,7 @@ class _AuthenticateState extends State<Authenticate> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Expanded(
-              child: Image.asset(width: 200, height: 200, 'assets/logo.png'),
+              child: Image.asset(width: 130, height: 130, 'assets/logo.png'),
             ),
             Expanded(
               child: Form(
@@ -107,6 +85,26 @@ class _AuthenticateState extends State<Authenticate> {
                       obscureText: true,
                     ),
                     SizedBox(height: 20),
+
+                    // register in option
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("Does'nt have an account?"),
+                        SizedBox(width: 5),
+                        InkWell(
+                          onTap: ()=>Navigator.pushNamed(context, '/register'),
+                          child: Text(
+                            "Register",
+                            style: _themeData.textTheme.displaySmall!
+                                .copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        )
+                      ],
+                    ),
+
+                    SizedBox(height: 20),
+
                     ElevatedButton(
                       onPressed: () {
                         if (_authKey.currentState!.validate()) {

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:telme/constants/dart_theme.dart';
 import 'package:telme/constants/light_theme.dart';
-import 'package:telme/views/auth/authenticate.dart';
+import 'package:telme/views/auth/login.dart';
+import 'package:telme/views/auth/register.dart';
 import 'package:telme/views/sections/wrapper.dart';
 
 void main() async {
@@ -20,8 +21,9 @@ class MyApp extends StatelessWidget {
 
   // Map defining the routes for the application
   static Map<String, WidgetBuilder> _appRoutes = {
-    '/': (context) => Authenticate(), // Route to Authenticate widget (default)
-    '/wrapper': (context) => Wrapper(), // Route to Wrapper widget
+    '/login': (context) => Login(), // Route to Login view
+    '/wrapper': (context) => Wrapper(), // Route to Wrapper veiw
+    '/register': (context)=> Register(),  // Route to register view 
   };
 
   // Builds the widget tree
@@ -29,7 +31,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // Disables debug banner
-      initialRoute: '/wrapper', // Sets the initial route
+      initialRoute: '/login', // Sets the initial route
       routes: _appRoutes, // Defines the routes for the app
       title: 'Tel Me', // Sets the title of the app
       darkTheme: DarkTheme(), // Sets the dark theme
