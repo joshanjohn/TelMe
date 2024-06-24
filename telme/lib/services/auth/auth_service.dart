@@ -10,8 +10,13 @@ class AuthService {
   final CollectionReference _userCollection =
       FirebaseFirestore.instance.collection('Users');
 
+  final CollectionReference _employeesCollection =
+      FirebaseFirestore.instance.collection('Employees');
+  final CollectionReference _employersCollection =
+      FirebaseFirestore.instance.collection('Employers');
+
   // Method to register a new user
-  Future<UserCredential> register(UserModel user) async {
+  Future<UserCredential> register(UserModel user, String accountType) async {
     // Create a new user with email and password
     UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
       email: user.email.toString().trim().toLowerCase(), // Clean email input
@@ -21,19 +26,39 @@ class AuthService {
     print("UID = " + userCredential.user!.uid); // Print user ID for debugging
 
     // If user creation was successful, add user data to Firestore
+
     if (userCredential.user != null) {
-      _userCollection.doc(userCredential.user!.uid).set({
-        'userId': userCredential.user!.uid, // Store user ID
-        'name': user.name, // Store user name
-        'email': user.email, // Store user email
-        'access': user.access, // Store user access level
-      });
+      //check if account type is employee or employer
+      if (accountType == "Employee") {
+        _employeesCollection.doc(userCredential.user!.uid).set({
+          'id': userCredential.user!.uid, // Store user ID
+          'name': user.name, // Store user name
+          'email': user.email, // Store user email
+          'access': user.access, // Store user access level
+        });
+      } else if (accountType == "Employer") {
+        _employersCollection.doc(userCredential.user!.uid).set({
+          'id': userCredential.user!.uid, // Store user ID
+          'name': user.name, // Store user name
+          'email': user.email, // Store user email
+          'access': user.access, // Store user access level
+        });
+      } else {
+        _userCollection.doc(userCredential.user!.uid).set({
+          'id': userCredential.user!.uid, // Store user ID
+          'name': user.name, // Store user name
+          'email': user.email, // Store user email
+          'access': user.access, // Store user access level
+        });
+      }
     }
 
     return userCredential; // Return user credentials
   }
 
   // Method to log in an existing user
+  //TODO
+  //require user to be a part of a company's shift
   Future<void> login(
       String email, String password, BuildContext context) async {
     try {
