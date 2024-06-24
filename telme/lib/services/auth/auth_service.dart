@@ -10,13 +10,46 @@ class AuthService {
   final CollectionReference _userCollection =
       FirebaseFirestore.instance.collection('Users');
 
+  //Employee and Employer collections
   final CollectionReference _employeesCollection =
       FirebaseFirestore.instance.collection('Employees');
   final CollectionReference _employersCollection =
       FirebaseFirestore.instance.collection('Employers');
 
+  //method for checking if user credentials belong to an employee of a company
+  Future<bool> checkIsEmployee(String email) async {
+    try {
+      QuerySnapshot employerQuery = await _employersCollection.get();
+
+      //loop through query
+      if (employerQuery.docs.isNotEmpty) {
+        for (QueryDocumentSnapshot document in employerQuery.docs) {
+          print("employer id: ${document.id}");
+          print("employer data: ${document.data()}");
+
+          //get documents of the Employee subcollection
+          QuerySnapshot employerEmployees =
+              await document.reference.collection("Employees").get();
+          if (employerEmployees.docs.isNotEmpty) {
+            for (QueryDocumentSnapshot employee in employerEmployees.docs) {
+              print("employee data: ${employee.data()}");
+              if (employee.get("email") == email) {
+                print("employee found");
+                return true;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print("Error finding document: $e");
+    }
+    print("no employee with this email found");
+    return false;
+  }
+
   // Method to register a new user
-  Future<UserCredential> register(UserModel user, String accountType) async {
+  Future<UserCredential> register(UserModel user, String accountType, BuildContext context) async {
     // Create a new user with email and password
     UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
       email: user.email.toString().trim().toLowerCase(), // Clean email input
@@ -30,21 +63,36 @@ class AuthService {
     if (userCredential.user != null) {
       //check if account type is employee or employer
       if (accountType == "Employee") {
-        _employeesCollection.doc(userCredential.user!.uid).set({
-          'id': userCredential.user!.uid, // Store user ID
-          'name': user.name, // Store user name
-          'email': user.email, // Store user email
-          'access': user.access, // Store user access level
-        });
+        if (await checkIsEmployee(user.email.toString().trim().toLowerCase())) {
+          _employeesCollection.doc(userCredential.user!.uid).set({
+            'id': userCredential.user!.uid, // Store user ID
+            'name': user.name, // Store user name
+            'email': user.email, // Store user email
+            'access': 'employee', // Store user access level
+          });
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  "This email isn't associated with a company in the database")), // Display error message
+        );
       } else if (accountType == "Employer") {
         _employersCollection.doc(userCredential.user!.uid).set({
           'id': userCredential.user!.uid, // Store user ID
           'name': user.name, // Store user name
           'email': user.email, // Store user email
-          'access': user.access, // Store user access level
+          'access': 'employer', // Store user access level
         });
-        _employersCollection.doc(userCredential.user!.uid).collection("Shifts").doc().set({});
-        _employersCollection.doc(userCredential.user!.uid).collection("Employees").doc().set({});
+        _employersCollection
+            .doc(userCredential.user!.uid)
+            .collection("Shifts")
+            .doc()
+            .set({});
+        _employersCollection
+            .doc(userCredential.user!.uid)
+            .collection("Employees")
+            .doc()
+            .set({});
       } else {
         _userCollection.doc(userCredential.user!.uid).set({
           'id': userCredential.user!.uid, // Store user ID
@@ -72,10 +120,19 @@ class AuthService {
 
       // If login is successful, navigate to the '/wrapper' route
       if (credential != null) {
-        Navigator.pushReplacementNamed(
-          context,
-          '/wrapper',
-        );
+        //check if employee is employed at a company in the database
+        if (await checkIsEmployee(email)) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/wrapper',
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    "This email isn't associated with a company in the database")), // Display error message
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       // Handle login error

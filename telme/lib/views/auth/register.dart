@@ -13,7 +13,7 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   // account types for the dropdown menu
   final List<String> accountTypes = ['Employee', 'Employer'];
-  late String _selectedType;
+  late String _selectedType = "Employee";
   String _nameText = "Full Name";
 
   final TextEditingController _nameController = TextEditingController();
@@ -36,7 +36,7 @@ class _RegisterState extends State<Register> {
 
       try {
         Future.delayed(Duration(seconds: 3));
-        final userData = await _auth.register(user, _selectedType);
+        final userData = await _auth.register(user, _selectedType, context);
 
         if (userData.user != null) {
           Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
