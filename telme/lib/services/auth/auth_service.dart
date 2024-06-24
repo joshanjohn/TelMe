@@ -43,6 +43,8 @@ class AuthService {
           'email': user.email, // Store user email
           'access': user.access, // Store user access level
         });
+        _employersCollection.doc(userCredential.user!.uid).collection("Shifts").doc().set({});
+        _employersCollection.doc(userCredential.user!.uid).collection("Employees").doc().set({});
       } else {
         _userCollection.doc(userCredential.user!.uid).set({
           'id': userCredential.user!.uid, // Store user ID
