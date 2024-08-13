@@ -10,3 +10,6 @@ If you would like to add any notes, please follow these steps:
 
 ## Contact
 For any issues or queries, please contact @mr_._joshan_ on instagram.
+
+## App UI 
+![Untitled design](https://github.com/user-attachments/assets/dab6f49b-df11-49cf-abfa-4ae242549c41)
