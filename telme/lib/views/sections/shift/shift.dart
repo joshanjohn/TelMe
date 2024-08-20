@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:telme/services/auth/auth_service.dart';
+import 'package:telme/models/user_model.dart';
+import 'package:telme/views/widgets/shift/list_of_shifts.dart';
 
 class ShiftSection extends StatefulWidget {
-  const ShiftSection({super.key});
+  final UserModel user;
+
+  const ShiftSection({Key? key, required this.user}) : super(key: key);
 
   @override
   State<ShiftSection> createState() => _ShiftSectionState();
@@ -13,34 +16,49 @@ class _ShiftSectionState extends State<ShiftSection> {
   Widget build(BuildContext context) {
     final _themeData = Theme.of(context);
     return Scaffold(
+        backgroundColor: Color.fromARGB(90, 138, 149, 170),
       appBar: AppBar(
+        foregroundColor: Colors.white,
+        backgroundColor: Color.fromARGB(255, 157, 32, 215),
         actions: [
           IconButton(
-            onPressed: () {
-              AuthService().logout().then((value) =>
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, '/', (route) => false));
-            },
-            icon: Icon(
-              Icons.logout_outlined,
-              size: 26,
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/addShift',
+            ),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              size: 30,
+              color: Colors.white70,
             ),
           ),
-          SizedBox(
-            width: 20,
-          )
+          const SizedBox(width: 20),
         ],
-        title: Text(
-          "Shift",
-          style: _themeData.textTheme.displayMedium!
-              .copyWith(fontWeight: FontWeight.bold),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Image.asset(
+              'assets/shift.png',
+              width: 40,
+              height: 40,
+            ),
+            const SizedBox(
+              width: 5,
+            ),
+            Text(
+              "Daily Shifts",
+              style: _themeData.textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        backgroundColor: Colors.black26,
       ),
-      body: Container(
-        child: ListView(
-          children: [],
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListOfShifts(widget: widget),
       ),
     );
   }

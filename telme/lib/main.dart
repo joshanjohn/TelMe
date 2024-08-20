@@ -4,7 +4,9 @@ import 'package:telme/constants/dart_theme.dart';
 import 'package:telme/constants/light_theme.dart';
 import 'package:telme/views/auth/login.dart';
 import 'package:telme/views/auth/register.dart';
+import 'package:telme/views/sections/shift/add_shift.dart';
 import 'package:telme/views/sections/wrapper.dart';
+import 'package:telme/models/user_model.dart';
 
 void main() async {
   // Ensures Flutter framework is initialized before running the app
@@ -19,12 +21,25 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // Map defining the routes for the application
-  static Map<String, WidgetBuilder> _appRoutes = {
-    '/login': (context) => Login(), // Route to Login view
-    '/wrapper': (context) => Wrapper(), // Route to Wrapper veiw
-    '/register': (context)=> Register(),  // Route to register view 
-  };
+  // Route generator function to handle route creation with parameters
+  Route<dynamic> _generateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case '/login':
+        return MaterialPageRoute(builder: (context) => const Login());
+      case '/addShift':
+        return MaterialPageRoute(builder: (context) => AddShift());
+      case '/register':
+        return MaterialPageRoute(builder: (context) => const Register());
+      case '/wrapper':
+        // Extract the UserModel argument from route settings
+        final args = settings.arguments as UserModel;
+        return MaterialPageRoute(
+          builder: (context) => Wrapper(user: args),
+        );
+      default:
+        return MaterialPageRoute(builder: (context) => const Login());
+    }
+  }
 
   // Builds the widget tree
   @override
@@ -32,7 +47,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // Disables debug banner
       initialRoute: '/login', // Sets the initial route
-      routes: _appRoutes, // Defines the routes for the app
+      onGenerateRoute: _generateRoute, // Defines the route generator
       title: 'Tel Me', // Sets the title of the app
       darkTheme: DarkTheme(), // Sets the dark theme
       theme: LightTheme(), // Sets the light theme

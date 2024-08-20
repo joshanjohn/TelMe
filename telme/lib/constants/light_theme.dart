@@ -13,7 +13,7 @@ ThemeData LightTheme() {
         color: Colors.black,
       ),
       titleMedium: TextStyle(
-        fontSize: 22,
+        fontSize: 24,
         fontWeight: FontWeight.bold,
         color: Colors.black,
       ),

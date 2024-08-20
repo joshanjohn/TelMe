@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:telme/services/auth/auth_service.dart';
+import 'package:telme/views/widgets/common/custom_textfield.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -22,78 +23,60 @@ class _LoginState extends State<Login> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Image.asset(width: 130, height: 130, 'assets/logo.png'),
-            ),
-            Expanded(
-              child: Form(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 100), // Add some spacing at the top
+              Image.asset(
+                'assets/signin.png',
+                width: 250,
+                height: 250,
+              ),
+              const SizedBox(
+                  height:
+                      50), // Add some spacing between the image and the form
+              Form(
                 key: _authKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    TextFormField(
+                    CustomTextField(
                       controller: _emailController,
-                      cursorColor: _themeData.focusColor,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        labelStyle: TextStyle(
-                            color: _themeData.focusColor), // Add this line
-                        hintStyle: _themeData.textTheme.displayMedium,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: _themeData.focusColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: _themeData.hintColor),
-                        ),
-                      ),
+                      label: "Email",
                       validator: (value) {
                         if (value!.isEmpty) {
                           return "Required an Email Id";
                         }
+                        return null;
                       },
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 20,
                     ),
-                    TextFormField(
+                    CustomTextField(
                       controller: _passwordController,
-                      cursorColor: _themeData.focusColor,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        labelStyle: TextStyle(
-                            color: _themeData.focusColor), // Add this line
-                        hintStyle: _themeData.textTheme.displayMedium,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: _themeData.focusColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: _themeData.hintColor),
-                        ),
-                      ),
+                      label: "Password",
+                      obsecureText: true,
                       validator: (value) {
                         if (value!.isEmpty) {
-                          return "Required an password";
+                          return "Required a password";
                         }
+                        return null;
                       },
-                      obscureText: true,
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
                     // register in option
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Does'nt have an account?"),
-                        SizedBox(width: 5),
+                        const Text("Doesn't have an account?"),
+                        const SizedBox(width: 5),
                         InkWell(
-                          onTap: ()=>Navigator.pushNamed(context, '/register'),
+                          onTap: () => Navigator.pushNamedAndRemoveUntil(
+                              context, '/register', (route) => false),
                           child: Text(
                             "Register",
                             style: _themeData.textTheme.displaySmall!
@@ -103,7 +86,7 @@ class _LoginState extends State<Login> {
                       ],
                     ),
 
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
                     ElevatedButton(
                       onPressed: () {
@@ -112,14 +95,14 @@ class _LoginState extends State<Login> {
                               _passwordController.text.trim(), context);
                         }
                       },
-                      child: Text('Login'),
+                      child: const Text('Login'),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

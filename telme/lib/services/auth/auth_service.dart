@@ -1,147 +1,78 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:telme/models/user_model.dart';
 
 class AuthService {
   // Initializing FirebaseAuth instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  
   // Reference to the 'Users' collection in Firestore
   final CollectionReference _userCollection =
       FirebaseFirestore.instance.collection('Users');
 
-  //Employee and Employer collections
-  final CollectionReference _employeesCollection =
-      FirebaseFirestore.instance.collection('Employees');
-  final CollectionReference _employersCollection =
-      FirebaseFirestore.instance.collection('Employers');
-
-  //method for checking if user credentials belong to an employee of a company
-  Future<bool> checkIsEmployee(String email) async {
+  // Method to register a new user
+  Future<UserCredential?> register(
+      {required UserModel user, required String password, required BuildContext context}) async {
     try {
-      QuerySnapshot employerQuery = await _employersCollection.get();
+      // Create a new user with email and password
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: user.email.toString().trim().toLowerCase(),
+        password: password,
+      );
 
-      //loop through query
-      if (employerQuery.docs.isNotEmpty) {
-        for (QueryDocumentSnapshot document in employerQuery.docs) {
-          print("employer id: ${document.id}");
-          print("employer data: ${document.data()}");
+      if (userCredential.user != null) {
+        // Check if account type is employee or employer
 
-          //get documents of the Employee subcollection
-          QuerySnapshot employerEmployees =
-              await document.reference.collection("Employees").get();
-          if (employerEmployees.docs.isNotEmpty) {
-            for (QueryDocumentSnapshot employee in employerEmployees.docs) {
-              print("employee data: ${employee.data()}");
-              if (employee.get("email") == email) {
-                print("employee found");
-                return true;
-              }
-            }
-          }
-        }
+        await _userCollection.doc(userCredential.user!.uid).set({
+          'userId': userCredential.user!.uid,
+          'name': user.name,
+          'email': user.email,
+          'access': user.access,
+        });
       }
-    } catch (e) {
-      print("Error finding document: $e");
+      return userCredential; // Return user credentials
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Registration failed")),
+      );
+      return null;
     }
-    print("no employee with this email found");
-    return false;
   }
 
-  // Method to register a new user
-  Future<UserCredential> register(UserModel user, String accountType, BuildContext context) async {
-    // Create a new user with email and password
-    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-      email: user.email.toString().trim().toLowerCase(), // Clean email input
-      password: user.password.toString().trim(), // Clean password input
+  Future<void> login(String email, String password, BuildContext context) async {
+  try {
+    // Attempt to sign in with email and password
+    UserCredential credential = await _auth.signInWithEmailAndPassword(
+      email: email, // Provided email
+      password: password, // Provided password
     );
 
-    print("UID = " + userCredential.user!.uid); // Print user ID for debugging
-
-    // If user creation was successful, add user data to Firestore
-
-    if (userCredential.user != null) {
-      //check if account type is employee or employer
-      if (accountType == "Employee") {
-        if (await checkIsEmployee(user.email.toString().trim().toLowerCase())) {
-          _employeesCollection.doc(userCredential.user!.uid).set({
-            'id': userCredential.user!.uid, // Store user ID
-            'name': user.name, // Store user name
-            'email': user.email, // Store user email
-            'access': 'employee', // Store user access level
-          });
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(
-                  "This email isn't associated with a company in the database")), // Display error message
-        );
-      } else if (accountType == "Employer") {
-        _employersCollection.doc(userCredential.user!.uid).set({
-          'id': userCredential.user!.uid, // Store user ID
-          'name': user.name, // Store user name
-          'email': user.email, // Store user email
-          'access': 'employer', // Store user access level
-        });
-        _employersCollection
-            .doc(userCredential.user!.uid)
-            .collection("Shifts")
-            .doc()
-            .set({});
-        _employersCollection
-            .doc(userCredential.user!.uid)
-            .collection("Employees")
-            .doc()
-            .set({});
-      } else {
-        _userCollection.doc(userCredential.user!.uid).set({
-          'id': userCredential.user!.uid, // Store user ID
-          'name': user.name, // Store user name
-          'email': user.email, // Store user email
-          'access': user.access, // Store user access level
-        });
-      }
-    }
-
-    return userCredential; // Return user credentials
-  }
-
-  // Method to log in an existing user
-  //TODO
-  //require user to be a part of a company's shift
-  Future<void> login(
-      String email, String password, BuildContext context) async {
-    try {
-      // Attempt to sign in with email and password
-      UserCredential credential = await _auth.signInWithEmailAndPassword(
-        email: email, // Provided email
-        password: password, // Provided password
+    // If login is successful, navigate to the '/wrapper' route
+    if (credential.user != null) {
+      DocumentSnapshot userDoc = await _userCollection.doc(credential.user!.uid).get();
+      SharedPreferences pref = await SharedPreferences.getInstance();
+      pref.setBool("logged", true);
+      Navigator.pushReplacementNamed(
+        context,
+        '/wrapper',
+        arguments: UserModel.fromJson(userDoc),
       );
-
-      // If login is successful, navigate to the '/wrapper' route
-      if (credential != null) {
-        //check if employee is employed at a company in the database
-        if (await checkIsEmployee(email)) {
-          Navigator.pushReplacementNamed(
-            context,
-            '/wrapper',
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                    "This email isn't associated with a company in the database")), // Display error message
-          );
-        }
-      }
-    } on FirebaseAuthException catch (e) {
-      // Handle login error
-      List errors = e.toString().split(']');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errors[1])), // Display error message
-      );
+      
     }
+  } on FirebaseAuthException catch (e) {
+    // Handle login error
+    List errors = e.toString().split(']');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(errors[1])), // Display error message
+    );
   }
+}
+
 
   // Method to log out the current user
   Future<void> logout() async {

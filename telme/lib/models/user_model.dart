@@ -6,7 +6,6 @@ class UserModel {
   String? name; // Name of the user, optional field.
   String? email; // Email of the user, optional field.
   String? access; // Access level of the user, optional field.
-  String? password; // Password of the user, optional field.
 
   // Constructor to initialize a UserModel object with optional fields.
   UserModel({
@@ -14,7 +13,6 @@ class UserModel {
     this.name,
     this.email,
     this.access,
-    this.password,
   });
 
   // Factory constructor to create a UserModel object from a Firestore document snapshot.
@@ -24,7 +22,6 @@ class UserModel {
       name: data['name'], // Fetches the name field from Firestore document.
       email: data['email'], // Fetches the email field from Firestore document.
       access: data['access'], // Fetches the access field from Firestore document.
-      password: data['password'], // Fetches the password field from Firestore document.
     );
   }
 
@@ -35,7 +32,6 @@ class UserModel {
       'name': name, // Converts name field to JSON.
       'email': email, // Converts email field to JSON.
       'access': access, // Converts access field to JSON.
-      'password': password, // Converts password field to JSON.
     };
   }
 }

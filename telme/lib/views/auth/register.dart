@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:telme/models/user_model.dart';
 import 'package:telme/services/auth/auth_service.dart';
+import 'package:telme/views/widgets/common/custom_textfield.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -29,17 +30,24 @@ class _RegisterState extends State<Register> {
     if (_regKey.currentState!.validate()) {
       UserModel user = UserModel(
         name: _nameController.text.trim(),
-        access: "user",
+        access: _selectedType,
         email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
       );
 
       try {
-        Future.delayed(Duration(seconds: 3));
-        final userData = await _auth.register(user, _selectedType, context);
+        Future.delayed(const Duration(seconds: 3));
+        final userData = await _auth.register(
+            user: user, password: _passwordController.text, context: context);
 
-        if (userData.user != null) {
-          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        if (userData?.user != null) {
+          Navigator.pushNamedAndRemoveUntil(
+              context, '/login', (route) => false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Colors.green,
+              content: Text("Successfully created account, login now"),
+            ),
+          );
         }
       } on FirebaseAuthException catch (e) {
         List errors = e.toString().split(']');
@@ -59,153 +67,123 @@ class _RegisterState extends State<Register> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Stack(
           children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('assets/logo.png', width: 130, height: 130),
-                SizedBox(height: 20),
-                Form(
-                  key: _regKey,
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Account Type:',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      SizedBox(height: 10),
-
-                      //dropdown menu for selecting account type
-                      DropdownButton(
-                        items: accountTypes.map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedType = newValue!;
-                            if(_selectedType=="Employee"){
-                              _nameText="Full Name";
-                            }
-                            if(_selectedType=="Employer"){
-                              _nameText="Company Name";
-                            }
-                          });
-                        },
-                        style: TextStyle(color: Colors.blue, fontSize: 16),
-                        dropdownColor: _themeData.focusColor,
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.blue),
-                      ),
-                      // Name
-                      TextFormField(
-                        controller: _nameController,
-                        cursorColor: _themeData.focusColor,
-                        decoration: InputDecoration(
-                          labelText: _nameText,
-                          labelStyle: TextStyle(color: _themeData.focusColor),
-                          hintStyle: _themeData.textTheme.displayMedium,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: _themeData.focusColor),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: _themeData.hintColor),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return "Required a Name";
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 20),
-                      // Email
-                      TextFormField(
-                        controller: _emailController,
-                        cursorColor: _themeData.focusColor,
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          labelStyle: TextStyle(color: _themeData.focusColor),
-                          hintStyle: _themeData.textTheme.displayMedium,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: _themeData.focusColor),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: _themeData.hintColor),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return "Required an Email Id";
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 20),
-                      // Password
-                      TextFormField(
-                        controller: _passwordController,
-                        cursorColor: _themeData.focusColor,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: TextStyle(color: _themeData.focusColor),
-                          hintStyle: _themeData.textTheme.displayMedium,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: _themeData.focusColor),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: _themeData.hintColor),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return "Required a password";
-                          }
-                          return null;
-                        },
-                        obscureText: true,
-                      ),
-                      SizedBox(height: 20),
-                      // register in option
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("Already have an account?"),
-                          SizedBox(width: 5),
-                          InkWell(
-                            onTap: () => Navigator.pushNamed(context, '/login'),
-                            child: Text(
-                              "Login",
-                              style: _themeData.textTheme.displaySmall!
-                                  .copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          )
-                        ],
-                      ),
-                      SizedBox(height: 20),
-
-                      ElevatedButton(
-                        onPressed: _register,
-                        child: Text('Register'),
-                      ),
-                      SizedBox(height: 20),
-                    ],
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    height: 100,
                   ),
-                ),
-              ],
+                  Image.asset('assets/signup.png', width: 200, height: 200),
+                  const SizedBox(height: 20),
+                  Form(
+                    key: _regKey,
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Account Type:',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+
+                        //dropdown menu for selecting account type
+                        DropdownButton(
+                          value: _selectedType,
+                          items: accountTypes
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _selectedType = newValue!;
+                              if (_selectedType == "Employee") {
+                                _nameText = "Full Name";
+                              }
+                              if (_selectedType == "Employer") {
+                                _nameText = "Company Name";
+                              }
+                            });
+                          },
+                          style:
+                              const TextStyle(color: Colors.blue, fontSize: 16),
+                          dropdownColor: _themeData.focusColor,
+                          icon: const Icon(Icons.arrow_drop_down,
+                              color: Colors.blue),
+                        ),
+                        // Name
+                        CustomTextField(
+                          controller: _nameController,
+                          label: "Full Name",
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Required a Name";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        const SizedBox(height: 20),
+                        // Email
+                        CustomTextField(
+                          controller: _emailController,
+                          label: "Email",
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Required an Email";
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        // Password
+                        CustomTextField(
+                          controller: _passwordController,
+                          label: "Password",
+                          obsecureText: true,
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Required an password";
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        // register in option
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Already have an account?"),
+                            const SizedBox(width: 5),
+                            InkWell(
+                              onTap: () => Navigator.pushNamedAndRemoveUntil(
+                                  context, '/login', (route) => false),
+                              child: Text(
+                                "Login",
+                                style: _themeData.textTheme.displaySmall!
+                                    .copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        ElevatedButton(
+                          onPressed: _register,
+                          child: const Text('Register'),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

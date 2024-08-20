@@ -8,7 +8,7 @@ ThemeData DarkTheme() {
     useMaterial3: true,
     scaffoldBackgroundColor: const Color.fromARGB(255, 13, 5, 75),
 
-    textTheme: TextTheme(
+    textTheme: const TextTheme(
       //title text
       titleLarge: TextStyle(
         fontSize: 26,
