@@ -16,7 +16,6 @@ class _ShiftSectionState extends State<ShiftSection> {
   Widget build(BuildContext context) {
     final _themeData = Theme.of(context);
     return Scaffold(
-        backgroundColor: Color.fromARGB(90, 138, 149, 170),
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: Color.fromARGB(255, 157, 32, 215),

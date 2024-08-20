@@ -22,6 +22,8 @@ class _HomeSectionState extends State<HomeSection> {
     final _themeData = Theme.of(ctx);
     return Scaffold(
       appBar: AppBar(
+        foregroundColor: Colors.white,
+        backgroundColor: Color.fromARGB(255, 157, 32, 215),
         actions: [
           IconButton(
             onPressed: () {
@@ -40,10 +42,11 @@ class _HomeSectionState extends State<HomeSection> {
         ],
         title: Text(
           "Home",
-          style: _themeData.textTheme.displayMedium!
-              .copyWith(fontWeight: FontWeight.bold),
+          style: _themeData.textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        backgroundColor: Colors.black26,
       ),
       body: Container(
         width: double.infinity,
@@ -57,24 +60,52 @@ class _HomeSectionState extends State<HomeSection> {
 
             Expanded(
               flex: 1,
-              child: RichText(
-                text: TextSpan(
-                  text: "Hi,",
-                  style: _themeData.textTheme.displayMedium,
-                  children: [
-                    TextSpan(
-                        text: " ${widget.user.name ?? 'error'}",
-                        style: _themeData.textTheme.titleLarge!
-                            .copyWith(fontWeight: FontWeight.normal))
-                  ],
-                ),
-                textAlign: TextAlign.center,
+              child: Column(
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      text: "Hi,",
+                      style: _themeData.textTheme.displayMedium,
+                      children: [
+                        TextSpan(
+                            text: " ${widget.user.name ?? 'error'}",
+                            style: _themeData.textTheme.titleLarge!
+                                .copyWith(fontWeight: FontWeight.normal))
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 5,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {},
+                        label: Text("Control"),
+                        icon: Icon(Icons.phone),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Color.fromARGB(203, 111, 58, 227),
+                          foregroundColor: Colors.white
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {},
+                        label: Text("Details"),
+                        icon: Icon(Icons.file_copy),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Color.fromARGB(202, 45, 128, 184),
+                          foregroundColor: Colors.white,
+                        ),
+                      )
+                    ],
+                  )
+                ],
               ),
             ),
             // time detials
 
             Expanded(
-              flex: 5,
+              flex: 4,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -84,10 +115,11 @@ class _HomeSectionState extends State<HomeSection> {
                       style: _themeData.textTheme.titleLarge,
                     ),
                   ),
-                  const SizedBox(height: 20),
                   ClockTiming(widget: widget),
                   // ClockButton
                   // ClockButton(),
+                  // display start and end timing
+                  ShiftTiming(widget: widget),
                   SlideAction(
                     onSubmit: () async {
                       await Future.delayed(Duration(seconds: 25));
@@ -100,12 +132,13 @@ class _HomeSectionState extends State<HomeSection> {
                     elevation: 5,
                     sliderRotate: false,
                     innerColor: Color.fromARGB(255, 147, 97, 221),
-                    sliderButtonIcon: Icon(Icons.play_circle_filled_rounded, color: Colors.white,),
+                    sliderButtonIcon: Icon(
+                      Icons.play_circle_filled_rounded,
+                      color: Colors.white,
+                    ),
                   ),
-                  
-                  const SizedBox(height: 20),
-                  // display start and end timing
-                  ShiftTiming(widget: widget),
+
+                  const SizedBox(height: 5),
                 ],
               ),
             ),
