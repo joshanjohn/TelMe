@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:telme/models/user_model.dart';
-import 'package:telme/services/auth/auth_service.dart';
+import 'package:telme/services/auth_services/auth_service.dart';
 import 'package:telme/views/widgets/home/clock_timing.dart';
 import 'package:telme/views/widgets/home/shift_timing.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeSection extends StatefulWidget {
   final UserModel user;
@@ -23,7 +25,7 @@ class _HomeSectionState extends State<HomeSection> {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        backgroundColor: Color.fromARGB(255, 157, 32, 215),
+        backgroundColor: const Color.fromARGB(255, 157, 32, 215),
         actions: [
           IconButton(
             onPressed: () {
@@ -75,25 +77,30 @@ class _HomeSectionState extends State<HomeSection> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 5,),
+                  const SizedBox(
+                    height: 5,
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       TextButton.icon(
-                        onPressed: () {},
-                        label: Text("Control"),
-                        icon: Icon(Icons.phone),
+                        onPressed: () async {
+                          FlutterPhoneDirectCaller.callNumber("+3530899600979");
+                        },
+                        label: const Text("Control"),
+                        icon: const Icon(Icons.phone),
                         style: TextButton.styleFrom(
-                          backgroundColor: Color.fromARGB(203, 111, 58, 227),
-                          foregroundColor: Colors.white
-                        ),
+                            backgroundColor:
+                                const Color.fromARGB(203, 111, 58, 227),
+                            foregroundColor: Colors.white),
                       ),
                       TextButton.icon(
                         onPressed: () {},
-                        label: Text("Details"),
-                        icon: Icon(Icons.file_copy),
+                        label: const Text("Details"),
+                        icon: const Icon(Icons.file_copy),
                         style: TextButton.styleFrom(
-                          backgroundColor: Color.fromARGB(202, 45, 128, 184),
+                          backgroundColor:
+                              const Color.fromARGB(202, 45, 128, 184),
                           foregroundColor: Colors.white,
                         ),
                       )
@@ -122,17 +129,18 @@ class _HomeSectionState extends State<HomeSection> {
                   ShiftTiming(widget: widget),
                   SlideAction(
                     onSubmit: () async {
-                      await Future.delayed(Duration(seconds: 25));
+                      await Future.delayed(const Duration(seconds: 25));
                       // Add any further action here that you want to occur after the delay
                       // For example, showing a message or navigating to another screen
                     },
-                    outerColor: Color.fromARGB(255, 195, 171, 232),
+                    outerColor: const Color.fromARGB(255, 195, 171, 232),
                     text: "Clock In",
+                    textColor: Color.fromARGB(144, 115, 50, 128),
                     borderRadius: 15,
-                    elevation: 5,
+                    elevation: 4,
                     sliderRotate: false,
-                    innerColor: Color.fromARGB(255, 147, 97, 221),
-                    sliderButtonIcon: Icon(
+                    innerColor: const Color.fromARGB(255, 147, 97, 221),
+                    sliderButtonIcon: const Icon(
                       Icons.play_circle_filled_rounded,
                       color: Colors.white,
                     ),
