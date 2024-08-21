@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:telme/models/user_model.dart';
-import 'package:telme/services/auth/auth_service.dart';
+import 'package:telme/services/auth_services/auth_service.dart';
 import 'package:telme/views/widgets/common/custom_textfield.dart';
 
 class Register extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:telme/models/shift_model.dart';
-import 'package:telme/services/shift_service.dart';
+import 'package:telme/services/shift_services/shift_service.dart';
 import 'package:telme/views/sections/shift/shift.dart';
 
 class ListOfShifts extends StatelessWidget {

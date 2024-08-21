@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:telme/services/auth/auth_service.dart';
+import 'package:telme/services/auth_services/auth_service.dart';
 import 'package:telme/views/widgets/common/custom_textfield.dart';
 
 class Login extends StatefulWidget {

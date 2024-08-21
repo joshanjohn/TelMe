@@ -57,9 +57,10 @@ class AuthService {
       DocumentSnapshot userDoc = await _userCollection.doc(credential.user!.uid).get();
       SharedPreferences pref = await SharedPreferences.getInstance();
       pref.setBool("logged", true);
-      Navigator.pushReplacementNamed(
+      Navigator.pushNamedAndRemoveUntil(
         context,
         '/wrapper',
+        (route)=>false,
         arguments: UserModel.fromJson(userDoc),
       );
       

@@ -21,7 +21,24 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // Route generator function to handle route creation with parameters
+  
+
+  // Builds the widget tree
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false, // Disables debug banner
+      initialRoute: '/login', // Sets the initial route
+      onGenerateRoute: _generateRoute, // Defines the route generator
+      title: 'Tel Me', // Sets the title of the app
+      darkTheme: DarkTheme(), // Sets the dark theme
+      theme: LightTheme(), // Sets the light theme
+    );
+  }
+}
+
+
+// Route generator function to handle route creation with parameters
   Route<dynamic> _generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/login':
@@ -40,17 +57,3 @@ class MyApp extends StatelessWidget {
         return MaterialPageRoute(builder: (context) => const Login());
     }
   }
-
-  // Builds the widget tree
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // Disables debug banner
-      initialRoute: '/login', // Sets the initial route
-      onGenerateRoute: _generateRoute, // Defines the route generator
-      title: 'Tel Me', // Sets the title of the app
-      darkTheme: DarkTheme(), // Sets the dark theme
-      theme: LightTheme(), // Sets the light theme
-    );
-  }
-}
