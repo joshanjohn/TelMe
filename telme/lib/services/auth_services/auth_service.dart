@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:telme/models/user_model.dart';
 
@@ -44,7 +45,7 @@ class AuthService {
     }
   }
 
-  Future<void> login(String email, String password, BuildContext context) async {
+  Future<void> login(String email, String password, BuildContext ctx) async {
   try {
     // Attempt to sign in with email and password
     UserCredential credential = await _auth.signInWithEmailAndPassword(
@@ -56,19 +57,16 @@ class AuthService {
     if (credential.user != null) {
       DocumentSnapshot userDoc = await _userCollection.doc(credential.user!.uid).get();
       SharedPreferences pref = await SharedPreferences.getInstance();
-      pref.setBool("logged", true);
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/wrapper',
-        (route)=>false,
-        arguments: UserModel.fromJson(userDoc),
-      );
+      pref.setString("userId", credential.user!.uid);
+
+      print("userId assigned = ${pref.getString("userId")}");
+       ctx.go('/wrapper');
       
     }
   } on FirebaseAuthException catch (e) {
     // Handle login error
     List errors = e.toString().split(']');
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(content: Text(errors[1])), // Display error message
     );
   }
@@ -78,5 +76,7 @@ class AuthService {
   // Method to log out the current user
   Future<void> logout() async {
     _auth.signOut(); // Sign out from FirebaseAuth
+    SharedPreferences _pref = await SharedPreferences.getInstance();
+    _pref.remove("userId");
   }
 }
