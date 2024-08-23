@@ -1,46 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:go_router/go_router.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:telme/models/user_model.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
+import 'package:telme/services/user_services/user_service.dart';
 import 'package:telme/views/widgets/home/clock_timing.dart';
 import 'package:telme/views/widgets/home/shift_timing.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class HomeSection extends StatefulWidget {
-  final UserModel user;
-  const HomeSection({super.key, required this.user});
+  const HomeSection({super.key});
 
   @override
   State<HomeSection> createState() => _HomeSectionState();
 }
 
 class _HomeSectionState extends State<HomeSection> {
-  // a flag indicator for changing color
-  bool isGreen = false;
+  UserModel? user;
+
+  @override
+  void initState() {
+    super.initState();
+    _initUser();
+  }
+
+  Future<void> _initUser() async {
+    try {
+      user = await UserService().getUserInfo();
+      print("User fetched successfully: ${user?.name}");
+    } catch (e) {
+      print("Error fetching user info: $e");
+      // Optionally handle error state
+    } finally {
+      setState(() {}); // Trigger a rebuild after fetching
+    }
+  }
 
   @override
   Widget build(BuildContext ctx) {
     final _themeData = Theme.of(ctx);
+
+    if (user == null) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: const Color.fromARGB(255, 157, 32, 215),
         actions: [
           IconButton(
-            onPressed: () {
-              AuthService().logout().then((value) =>
-                  Navigator.pushNamedAndRemoveUntil(
-                      ctx, '/', (route) => false));
+            onPressed: () async {
+              await AuthService().logout(); // Ensure logout completes
+              GoRouter.of(context).goNamed('login'); // Correctly navigate
             },
-            icon: const Icon(
-              Icons.logout_outlined,
-              size: 26,
-            ),
+            icon: const Icon(Icons.logout_outlined, size: 26),
           ),
-          const SizedBox(
-            width: 20,
-          )
+          const SizedBox(width: 20)
         ],
         title: Text(
           "Home",
@@ -58,8 +76,6 @@ class _HomeSectionState extends State<HomeSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            // name of the person
-
             Expanded(
               flex: 1,
               child: Column(
@@ -70,29 +86,30 @@ class _HomeSectionState extends State<HomeSection> {
                       style: _themeData.textTheme.displayMedium,
                       children: [
                         TextSpan(
-                            text: " ${widget.user.name ?? 'error'}",
-                            style: _themeData.textTheme.titleLarge!
-                                .copyWith(fontWeight: FontWeight.normal))
+                          text: " ${user!.name}",
+                          style: _themeData.textTheme.titleLarge!
+                              .copyWith(fontWeight: FontWeight.normal),
+                        ),
                       ],
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(
-                    height: 5,
-                  ),
+                  const SizedBox(height: 5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       TextButton.icon(
                         onPressed: () async {
-                          FlutterPhoneDirectCaller.callNumber("+3530899600979");
+                          await FlutterPhoneDirectCaller.callNumber(
+                              "+3530899600979");
                         },
                         label: const Text("Control"),
                         icon: const Icon(Icons.phone),
                         style: TextButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(203, 111, 58, 227),
-                            foregroundColor: Colors.white),
+                          backgroundColor:
+                              const Color.fromARGB(203, 111, 58, 227),
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: () {},
@@ -103,14 +120,12 @@ class _HomeSectionState extends State<HomeSection> {
                               const Color.fromARGB(202, 45, 128, 184),
                           foregroundColor: Colors.white,
                         ),
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
-            // time detials
-
             Expanded(
               flex: 4,
               child: Column(
@@ -123,15 +138,11 @@ class _HomeSectionState extends State<HomeSection> {
                     ),
                   ),
                   ClockTiming(widget: widget),
-                  // ClockButton
-                  // ClockButton(),
-                  // display start and end timing
                   ShiftTiming(widget: widget),
                   SlideAction(
                     onSubmit: () async {
                       await Future.delayed(const Duration(seconds: 25));
-                      // Add any further action here that you want to occur after the delay
-                      // For example, showing a message or navigating to another screen
+                      // Add further actions here
                     },
                     outerColor: const Color.fromARGB(255, 195, 171, 232),
                     text: "Clock In",
@@ -145,7 +156,6 @@ class _HomeSectionState extends State<HomeSection> {
                       color: Colors.white,
                     ),
                   ),
-
                   const SizedBox(height: 5),
                 ],
               ),

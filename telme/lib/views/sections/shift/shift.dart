@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:telme/models/user_model.dart';
 import 'package:telme/views/widgets/shift/list_of_shifts.dart';
 
-class ShiftSection extends StatefulWidget {
-  final UserModel user;
+class ShiftSection extends StatelessWidget {
+  const ShiftSection({super.key});
 
-  const ShiftSection({Key? key, required this.user}) : super(key: key);
-
-  @override
-  State<ShiftSection> createState() => _ShiftSectionState();
-}
-
-class _ShiftSectionState extends State<ShiftSection> {
   @override
   Widget build(BuildContext context) {
     final _themeData = Theme.of(context);
@@ -55,9 +47,10 @@ class _ShiftSectionState extends State<ShiftSection> {
           ],
         ),
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: ListOfShifts(widget: widget),
+        child: ListOfShifts(),
       ),
     );
   }

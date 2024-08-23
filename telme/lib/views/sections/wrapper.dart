@@ -1,11 +1,16 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:telme/models/user_model.dart';
+import 'package:telme/services/user_services/user_service.dart';
 import 'package:telme/views/sections/home/home.dart';
 import 'package:telme/views/sections/shift/shift.dart';
 
 class Wrapper extends StatefulWidget {
-  final UserModel user;
-  const Wrapper({super.key, required this.user});
+  const Wrapper({
+    super.key,
+  });
 
   @override
   State<Wrapper> createState() => _WrapperState();
@@ -14,18 +19,11 @@ class Wrapper extends StatefulWidget {
 class _WrapperState extends State<Wrapper> {
   final PageController _pageController = PageController();
   int _selectedScreen = 0;
-  late final List<Widget> _screens;
+  final List<Widget> _screens = [
+    HomeSection(),
+    ShiftSection(),
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    _screens = [
-      // Home view
-      HomeSection(user: widget.user),
-      // Shift view
-      ShiftSection(user: widget.user),
-    ];
-  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -33,7 +31,7 @@ class _WrapperState extends State<Wrapper> {
     });
     _pageController.animateToPage(
       index,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.ease,
     );
   }
