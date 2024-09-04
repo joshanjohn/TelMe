@@ -16,6 +16,8 @@ So far the Application User Interface looks like this.
 ## UpComing Plans 
 So far it need a well backend structure and scalable changes like 
 1. #### Replace Firebase 
-   The horror stories of firebase are enourmous in real world scalable application, which include's the cost of read and writing data. So, It is very necessary to migrate to alternative and affordable solution. As an alternative we are planning to use Digital Ocean 
+   The horror stories of firebase are enourmous in real world scalable application, which include's the cost of read and writing data. So, It is very necessary to migrate to alternative and affordable solution. As an alternative we are planning to use Digital Ocean.
+2. #### App State Management
+   So far the app does'nt use any explicit state management but it is also need to maintain the each state as the app increment it's complexity. Once such easy solution is use of GETX in our app. 
 ## Contact
 For any issues or queries, please contact @mr_._joshan_ on instagram.
