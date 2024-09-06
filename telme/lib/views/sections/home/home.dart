@@ -5,6 +5,7 @@ import 'package:slide_to_act/slide_to_act.dart';
 import 'package:telme/models/user_model.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
 import 'package:telme/services/user_services/user_service.dart';
+import 'package:telme/views/auth/login.dart';
 import 'package:telme/views/widgets/home/clock_timing.dart';
 import 'package:telme/views/widgets/home/shift_timing.dart';
 
@@ -53,8 +54,9 @@ class _HomeSectionState extends State<HomeSection> {
         actions: [
           IconButton(
             onPressed: () async {
-              await AuthService().logout(); // Ensure logout completes
-              GoRouter.of(context).goNamed('login'); // Correctly navigate
+              await AuthService().logout().then((value) {
+               GoRouter.of(context).go('/login');
+              });
             },
             icon: const Icon(Icons.logout_outlined, size: 26),
           ),
