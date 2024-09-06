@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:telme/constants/Image_string.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
 import 'package:telme/views/widgets/common/custom_textfield.dart';
 
@@ -30,13 +31,13 @@ class _LoginState extends State<Login> {
             children: [
               const SizedBox(height: 100), // Add some spacing at the top
               Image.asset(
-                'assets/signin.png',
+                AppImages.loginImage,
                 width: 250,
                 height: 250,
               ),
               const SizedBox(
-                  height:
-                      50), // Add some spacing between the image and the form
+                height: 50,
+              ), // Add some spacing between the image and the form
               Form(
                 key: _authKey,
                 child: Column(
@@ -88,14 +89,17 @@ class _LoginState extends State<Login> {
 
                     const SizedBox(height: 20),
 
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_authKey.currentState!.validate()) {
-                          _authService.login(_emailController.text.trim(),
-                              _passwordController.text.trim(), context);
-                        }
-                      },
-                      child: const Text('Login'),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_authKey.currentState!.validate()) {
+                            _authService.login(_emailController.text.trim(),
+                                _passwordController.text.trim(), context);
+                          }
+                        },
+                        child: const Text('Login'),
+                      ),
                     ),
                     const SizedBox(height: 20),
                   ],

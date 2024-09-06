@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:telme/constants/Image_string.dart';
 import 'package:telme/views/widgets/shift/list_of_shifts.dart';
 
 class ShiftSection extends StatelessWidget {
@@ -30,7 +31,7 @@ class ShiftSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Image.asset(
-              'assets/shift.png',
+             AppImages.shiftIcon,
               width: 40,
               height: 40,
             ),
