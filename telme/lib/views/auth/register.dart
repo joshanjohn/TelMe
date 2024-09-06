@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import 'package:telme/constants/Image_string.dart';
 import 'package:telme/models/user_model.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
 import 'package:telme/views/widgets/common/custom_textfield.dart';
@@ -78,7 +80,7 @@ class _RegisterState extends State<Register> {
                   const SizedBox(
                     height: 100,
                   ),
-                  Image.asset('assets/signup.png', width: 200, height: 200),
+                  Image.asset(AppImages.signUp, width: 200, height: 200),
                   const SizedBox(height: 20),
                   Form(
                     key: _regKey,
@@ -162,8 +164,7 @@ class _RegisterState extends State<Register> {
                             const Text("Already have an account?"),
                             const SizedBox(width: 5),
                             InkWell(
-                              onTap: () => Navigator.pushNamedAndRemoveUntil(
-                                  context, '/login', (route) => false),
+                              onTap: () => GoRouter.of(context).go('/login'),
                               child: Text(
                                 "Login",
                                 style: _themeData.textTheme.displaySmall!

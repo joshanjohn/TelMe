@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:telme/constants/Image_string.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
 import 'package:telme/views/widgets/common/custom_textfield.dart';
@@ -31,7 +32,7 @@ class _LoginState extends State<Login> {
             children: [
               const SizedBox(height: 100), // Add some spacing at the top
               Image.asset(
-                AppImages.loginImage,
+                AppImages.signIn,
                 width: 250,
                 height: 250,
               ),
@@ -76,8 +77,7 @@ class _LoginState extends State<Login> {
                         const Text("Doesn't have an account?"),
                         const SizedBox(width: 5),
                         InkWell(
-                          onTap: () => Navigator.pushNamedAndRemoveUntil(
-                              context, '/register', (route) => false),
+                          onTap: () => GoRouter.of(context).go('/register'),
                           child: Text(
                             "Register",
                             style: _themeData.textTheme.displaySmall!
