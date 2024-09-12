@@ -9,7 +9,8 @@ Tel Me is an application for recording and tracking employee work timings and sh
 
 ## App UI 
 So far the Application User Interface looks like this. 
-![Untitled design](https://github.com/user-attachments/assets/dab6f49b-df11-49cf-abfa-4ae242549c41)
+<img width="852" alt="Screenshot 2024-09-12 at 07 23 47" src="https://github.com/user-attachments/assets/b24b94ea-d425-4475-8789-25ab65f65444">
+
 
 
 
