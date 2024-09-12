@@ -1,25 +1,13 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:telme/models/shift_model.dart';
+import 'package:telme/services/user_services/user_service.dart';
 
 class ShiftService {
   final _userCollection = FirebaseFirestore.instance.collection('Users');
-
-  // Fetch shifts as a Future
-  Future<List<ShiftModel>> fetchShifts({required String userId}) async {
-    final _shiftCollection = _userCollection.doc(userId).collection('Shifts');
-
-    try {
-      QuerySnapshot querySnapshot = await _shiftCollection.get();
-      List<ShiftModel> shifts = querySnapshot.docs.map((doc) {
-        return ShiftModel.fromJson(doc);
-      }).toList();
-      return shifts;
-    } catch (e) {
-      print('Error fetching shifts: $e');
-      return []; // Return an empty list in case of error
-    }
-  }
 
   // Fetch shifts as a Stream
   Stream<List<ShiftModel>> fetchShiftsStream({required String userId}) {
@@ -41,7 +29,7 @@ class ShiftService {
       final closestShiftDoc = querySnapshot.docs.where((doc) {
         final shift = ShiftModel.fromJson(doc);
         return shift.startTime.isAfter(now) &&
-               shift.startTime.isBefore(now.add(Duration(minutes: 15)));
+            shift.startTime.isBefore(now.add(Duration(minutes: 15)));
       }).toList();
 
       if (closestShiftDoc.isNotEmpty) {
@@ -52,7 +40,50 @@ class ShiftService {
     });
   }
 
-  String extractShiftStamp({required DateTime dateTime, required String format}) {
-      return DateFormat(format).format(dateTime);
+  String extractShiftStamp(
+      {required DateTime dateTime, required String format}) {
+    return DateFormat(format).format(dateTime);
+  }
+
+  Stream<ShiftModel?> getUpcomingShift() async* {
+    final currentTime = DateTime.now();
+    final String userId = await UserService().getUserID();
+
+    // Reference to the Firebase location
+    final shiftsCollection =
+        FirebaseFirestore.instance.collection('/Users/$userId/Shifts');
+
+    // Query shifts where startTime is within 15 minutes and endTime is greater than now
+    yield* shiftsCollection
+        .where('startTime', isGreaterThanOrEqualTo: currentTime)
+        .where(
+          'startTime',
+          isLessThanOrEqualTo: currentTime.add(Duration(minutes: 15)),
+        )
+        .snapshots()
+        .map((snapshot) {
+      // Check if there is any shift
+      if (snapshot.docs.isNotEmpty) {
+        // Return the first shift
+        print(snapshot.docs.length);
+        return ShiftModel.fromJson(snapshot.docs[0]);
+      } else {
+        // No upcoming shift found
+        return null;
+      }
+    });
+  }
+
+  Future addShift(ShiftModel shift, BuildContext context) async {
+    try {
+      final String userId = await UserService().getUserID();
+      await _userCollection
+          .doc(userId)
+          .collection('Shifts')
+          .doc()
+          .set(shift.toJson());
+    } on FirebaseException catch (e) {
+      print(e);
     }
+  }
 }
