@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:telme/constants/Image_string.dart';
+import 'package:go_router/go_router.dart';
+import 'package:telme/utils/constants/Image_string.dart';
 import 'package:telme/views/widgets/shift/list_of_shifts.dart';
 
 class ShiftSection extends StatelessWidget {
@@ -14,10 +15,7 @@ class ShiftSection extends StatelessWidget {
         backgroundColor: Color.fromARGB(255, 157, 32, 215),
         actions: [
           IconButton(
-            onPressed: () => Navigator.pushNamed(
-              context,
-              '/addShift',
-            ),
+            onPressed: () => GoRouter.of(context).push('/addShift'),
             icon: const Icon(
               Icons.add_circle_outline,
               size: 30,

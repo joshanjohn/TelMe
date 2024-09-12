@@ -3,13 +3,11 @@ import 'package:intl/intl.dart';
 
 class CustomDateTimePicker extends StatefulWidget {
   final String pickLabel;
-  final DateTime? initialDateTime;
   final ValueChanged<DateTime?> onDateTimeChanged;
 
   CustomDateTimePicker({
     required this.pickLabel,
     required this.onDateTimeChanged,
-    this.initialDateTime,
     Key? key,
   }) : super(key: key);
 
@@ -19,12 +17,6 @@ class CustomDateTimePicker extends StatefulWidget {
 
 class _CustomDateTimePickerState extends State<CustomDateTimePicker> {
   DateTime? _selectedDateTime;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDateTime = widget.initialDateTime;
-  }
 
   // Display the selected date and time
   String _showSelectedTime() {
@@ -42,13 +34,12 @@ class _CustomDateTimePickerState extends State<CustomDateTimePicker> {
         shape: RoundedRectangleBorder(),
         padding: EdgeInsets.all(0),
         splashFactory: NoSplash.splashFactory,
-       overlayColor: Colors.transparent,
-
+        overlayColor: Colors.transparent,
       ),
       onPressed: () async {
         DateTime? pickedDate = await showDatePicker(
           context: context,
-          initialDate: _selectedDateTime ?? DateTime.now(),
+          initialDate: DateTime.now(),
           firstDate: DateTime.now(),
           lastDate: DateTime.now().add(
             const Duration(days: 365 * 24),
@@ -56,10 +47,8 @@ class _CustomDateTimePickerState extends State<CustomDateTimePicker> {
         );
         if (pickedDate != null) {
           TimeOfDay? pickedTime = await showTimePicker(
-            
             context: context,
-            initialTime:
-                TimeOfDay.fromDateTime(_selectedDateTime ?? DateTime.now()),
+            initialTime: TimeOfDay.fromDateTime(DateTime.now()),
           );
 
           if (pickedTime != null) {

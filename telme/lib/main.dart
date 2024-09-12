@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:telme/constants/dart_theme.dart';
-import 'package:telme/constants/light_theme.dart';
+import 'package:telme/utils/constants/dart_theme.dart';
+import 'package:telme/utils/constants/light_theme.dart';
 import 'package:telme/router/routes.dart';
 
 void main() async {
@@ -23,8 +23,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false, // Disables debug banner
       routerConfig: appRouter,
-      // initialRoute: '/splash', // Sets the initial route
-      // onGenerateRoute: _generateRoute, // Defines the route generator
       title: 'Tel Me', // Sets the title of the app
       darkTheme: DarkTheme(), // Sets the dark theme
       theme: LightTheme(), // Sets the light theme

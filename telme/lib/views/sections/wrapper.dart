@@ -1,9 +1,4 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:telme/models/user_model.dart';
-import 'package:telme/services/user_services/user_service.dart';
 import 'package:telme/views/sections/home/home.dart';
 import 'package:telme/views/sections/shift/shift.dart';
 
@@ -23,7 +18,6 @@ class _WrapperState extends State<Wrapper> {
     HomeSection(),
     ShiftSection(),
   ];
-
 
   void _onItemTapped(int index) {
     setState(() {

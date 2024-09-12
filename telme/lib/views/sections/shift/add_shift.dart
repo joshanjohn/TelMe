@@ -1,24 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:telme/views/widgets/common/custom_textfield.dart';
+import 'package:telme/models/shift_model.dart';
+import 'package:telme/services/shift_services/shift_service.dart';
+import 'package:telme/utils/common/widgets/custom_textfield.dart';
 import 'package:telme/views/widgets/shift/custom_date_time_picker.dart';
 
 class AddShift extends StatelessWidget {
   AddShift({super.key});
 
+  final ShiftService _shift = ShiftService();
+
   final GlobalKey<FormState> _addShiftFormKey = GlobalKey();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
 
-  DateTime? _startShiftDateTime;
-  DateTime? _endShiftDateTime;
+  final ValueNotifier<DateTime?> _startDateTimeTimeNotifier =
+      ValueNotifier<DateTime?>(null);
+  final ValueNotifier<DateTime?> _endDateTimeNotifier =
+      ValueNotifier<DateTime?>(null);
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData _themeData = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 221, 212, 223),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(72, 67, 31, 82),
+        backgroundColor: Color.fromARGB(71, 202, 199, 203),
         title: const Text(
           "Add Shift",
           style: TextStyle(color: Color.fromARGB(210, 75, 48, 80)),
@@ -42,32 +47,41 @@ class AddShift extends StatelessWidget {
                   label: "Name",
                 ),
                 const SizedBox(height: 20),
-          
+
                 // location name
                 CustomTextField(
                   controller: _locationController,
                   label: "Location",
                 ),
                 const SizedBox(height: 20),
-          
+
                 // shift start date and time
-                CustomDateTimePicker(
-                  pickLabel: "Start Shift",
-                  initialDateTime: _startShiftDateTime,
-                  onDateTimeChanged: (dateTime) {
-                    _startShiftDateTime = dateTime;
+                ValueListenableBuilder<DateTime?>(
+                  valueListenable: _startDateTimeTimeNotifier,
+                  builder: (context, startShiftDateTime, child) {
+                    return CustomDateTimePicker(
+                      pickLabel: "Start Shift",
+                      onDateTimeChanged: (dateTime) {
+                        _startDateTimeTimeNotifier.value = dateTime;
+                      },
+                    );
                   },
                 ),
                 const SizedBox(height: 20),
-          
+
                 // shift end date and time
-                CustomDateTimePicker(
-                  pickLabel: "End Shift",
-                  initialDateTime: _endShiftDateTime,
-                  onDateTimeChanged: (dateTime) {
-                    _endShiftDateTime = dateTime;
+                ValueListenableBuilder<DateTime?>(
+                  valueListenable: _endDateTimeNotifier,
+                  builder: (context, endShiftDateTime, child) {
+                    return CustomDateTimePicker(
+                      pickLabel: "End Shift",
+                      onDateTimeChanged: (dateTime) {
+                        _endDateTimeNotifier.value = dateTime;
+                      },
+                    );
                   },
                 ),
+
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
@@ -75,11 +89,19 @@ class AddShift extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10))),
                     onPressed: () {
-                      if (_addShiftFormKey.currentState!.validate()) {
-                        // Form is valid, proceed with further actions
-                        print("Start Shift: $_startShiftDateTime");
-                        print("End Shift: $_endShiftDateTime");
-                        // Further processing can be done here
+                      if (_addShiftFormKey.currentState!.validate() &&
+                          _startDateTimeTimeNotifier.value != null &&
+                          _endDateTimeNotifier != null) {
+                        _shift.addShift(
+                          ShiftModel(
+                            name: _nameController.text,
+                            location: _locationController.text,
+                            startTime: _startDateTimeTimeNotifier.value!,
+                            endTime: _endDateTimeNotifier.value!,
+                          ),context
+                        ).then((value){
+                          
+                        });
                       }
                     },
                     child: const Text(

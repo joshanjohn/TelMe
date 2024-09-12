@@ -6,14 +6,18 @@ class UserService {
   final _userCollection = FirebaseFirestore.instance.collection("Users");
 
   Future<UserModel?> getUserInfo() async {
-    final SharedPreferences _pref = await SharedPreferences.getInstance();
     try {
-      String userId = _pref.getString("userId")!;
+      String userId = await getUserID();
       DocumentSnapshot data = await _userCollection.doc(userId).get();
       return UserModel.fromJson(data);
-    }  catch(e) {
+    } catch (e) {
       print("Error on getUserinfo service");
       return null;
     }
+  }
+
+  Future<String> getUserID() async {
+    final SharedPreferences _pref = await SharedPreferences.getInstance();
+    return _pref.getString("userId")!;
   }
 }

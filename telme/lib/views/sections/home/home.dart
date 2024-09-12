@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slide_to_act/slide_to_act.dart';
+import 'package:telme/models/shift_model.dart';
 import 'package:telme/models/user_model.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
+import 'package:telme/services/shift_services/shift_service.dart';
 import 'package:telme/services/user_services/user_service.dart';
-import 'package:telme/views/auth/login.dart';
+import 'package:telme/utils/constants/Image_string.dart';
 import 'package:telme/views/widgets/home/clock_timing.dart';
 import 'package:telme/views/widgets/home/shift_timing.dart';
 
@@ -42,7 +44,7 @@ class _HomeSectionState extends State<HomeSection> {
     final _themeData = Theme.of(ctx);
 
     if (user == null) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -55,7 +57,7 @@ class _HomeSectionState extends State<HomeSection> {
           IconButton(
             onPressed: () async {
               await AuthService().logout().then((value) {
-               GoRouter.of(context).go('/login');
+                GoRouter.of(context).go('/login');
               });
             },
             icon: const Icon(Icons.logout_outlined, size: 26),
@@ -130,36 +132,56 @@ class _HomeSectionState extends State<HomeSection> {
             ),
             Expanded(
               flex: 4,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Center(
-                    child: Text(
-                      "Hickey Pharmacy",
-                      style: _themeData.textTheme.titleLarge,
-                    ),
-                  ),
-                  ClockTiming(widget: widget),
-                  ShiftTiming(widget: widget),
-                  SlideAction(
-                    onSubmit: () async {
-                      await Future.delayed(const Duration(seconds: 25));
-                      // Add further actions here
-                    },
-                    outerColor: const Color.fromARGB(255, 195, 171, 232),
-                    text: "Clock In",
-                    textColor: Color.fromARGB(144, 115, 50, 128),
-                    borderRadius: 15,
-                    elevation: 4,
-                    sliderRotate: false,
-                    innerColor: const Color.fromARGB(255, 147, 97, 221),
-                    sliderButtonIcon: const Icon(
-                      Icons.play_circle_filled_rounded,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                ],
+              child: StreamBuilder(
+                stream: ShiftService().getUpcomingShift(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData && snapshot.data == null) {
+                    return Center(
+                        child: Column(
+                      children: [
+                        Text("No Shift found",
+                            style: _themeData.textTheme.titleLarge!.copyWith(color: Colors.purple)),
+                        Image.asset(AppImages.no_shift)
+                      ],
+                    ));
+                  } else if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else {
+                    final ShiftModel shift = snapshot.data!;
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Center(
+                          child: Text(
+                            shift.name,
+                            style: _themeData.textTheme.titleLarge,
+                          ),
+                        ),
+                        ClockTiming(widget: widget),
+                        ShiftTiming(widget: widget),
+                        SlideAction(
+                          onSubmit: () async {
+                            await Future.delayed(const Duration(seconds: 25));
+                            // Add further actions here
+                          },
+                          outerColor: const Color.fromARGB(255, 195, 171, 232),
+                          text: "Clock In",
+                          textColor: const Color.fromARGB(144, 115, 50, 128),
+                          borderRadius: 15,
+                          elevation: 4,
+                          sliderRotate: false,
+                          innerColor: const Color.fromARGB(255, 147, 97, 221),
+                          sliderButtonIcon: const Icon(
+                            Icons.play_circle_filled_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                      ],
+                    );
+                  }
+                },
               ),
             ),
           ],

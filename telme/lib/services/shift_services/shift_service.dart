@@ -58,7 +58,7 @@ class ShiftService {
         .where('startTime', isGreaterThanOrEqualTo: currentTime)
         .where(
           'startTime',
-          isLessThanOrEqualTo: currentTime.add(Duration(minutes: 15)),
+          isLessThanOrEqualTo: currentTime.add(const Duration(minutes: 15)),
         )
         .snapshots()
         .map((snapshot) {

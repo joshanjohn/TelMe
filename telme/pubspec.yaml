@@ -38,6 +38,7 @@ flutter:
   assets:
     - assets/
     - assets/images/auth/
+    - assets/images/home/
     - assets/icons/
   
   # fonts:

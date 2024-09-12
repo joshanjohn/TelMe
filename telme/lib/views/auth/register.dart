@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
-import 'package:telme/constants/Image_string.dart';
+import 'package:telme/utils/constants/Image_string.dart';
 import 'package:telme/models/user_model.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
-import 'package:telme/views/widgets/common/custom_textfield.dart';
+import 'package:telme/utils/common/widgets/custom_textfield.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -175,9 +175,16 @@ class _RegisterState extends State<Register> {
                         ),
                         const SizedBox(height: 20),
 
-                        ElevatedButton(
-                          onPressed: _register,
-                          child: const Text('Register'),
+                        SizedBox(
+                           height: 60,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          elevation: 0,
+                        ),
+                            onPressed: _register,
+                            child:  Text('Register',style: _themeData.textTheme.displayLarge!.copyWith(color: Colors.white),),
+                          ),
                         ),
                         const SizedBox(height: 20),
                       ],

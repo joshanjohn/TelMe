@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:telme/views/auth/login.dart';
 import 'package:telme/views/auth/register.dart';
+import 'package:telme/views/sections/shift/add_shift.dart';
 import 'package:telme/views/sections/wrapper.dart';
 import 'package:telme/views/splash_screen.dart';
 
@@ -17,5 +18,9 @@ GoRouter appRouter = GoRouter(routes: [
   GoRoute(
     path: '/wrapper',
     builder: (context, state) => Wrapper(),
+  ),
+  GoRoute(
+    path: '/addShift',
+    builder: (context, state) => AddShift(),
   )
 ]);

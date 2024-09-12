@@ -5,7 +5,7 @@ ThemeData LightTheme() {
     colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
     useMaterial3: true,
 
-    textTheme: TextTheme(
+    textTheme: const TextTheme(
       //title text
       titleLarge: TextStyle(
         fontSize: 32,

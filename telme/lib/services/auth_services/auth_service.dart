@@ -59,7 +59,7 @@ class AuthService {
       SharedPreferences pref = await SharedPreferences.getInstance();
       pref.setString("userId", credential.user!.uid);
 
-      print("userId assigned = ${pref.getString("userId")}");
+      //print("userId assigned = ${pref.getString("userId")}");
        ctx.go('/wrapper');
       
     }

@@ -5,4 +5,7 @@ class AppImages {
 
   // --Icons
   static const shiftIcon = "assets/icons/shift.png";
+
+  // home screen image
+  static const no_shift = "assets/images/home/no_work.gif";
 }

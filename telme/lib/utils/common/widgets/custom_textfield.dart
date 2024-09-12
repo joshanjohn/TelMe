@@ -39,11 +39,11 @@ class CustomTextField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: Colors.red),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: Colors.red),
         ),
       ),
       validator: _validator,

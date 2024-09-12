@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:telme/constants/Image_string.dart';
+import 'package:telme/utils/constants/Image_string.dart';
 import 'package:telme/services/auth_services/auth_service.dart';
-import 'package:telme/views/widgets/common/custom_textfield.dart';
+import 'package:telme/utils/common/widgets/custom_textfield.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -90,15 +90,19 @@ class _LoginState extends State<Login> {
                     const SizedBox(height: 20),
 
                     SizedBox(
-                      width: double.infinity,
+                      height: 60,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.indigo,
+                          elevation: 0,
+                        ),
                         onPressed: () {
                           if (_authKey.currentState!.validate()) {
                             _authService.login(_emailController.text.trim(),
                                 _passwordController.text.trim(), context);
                           }
                         },
-                        child: const Text('Login'),
+                        child:  Text('Login', style: _themeData.textTheme.displayLarge!.copyWith(color: Colors.white),),
                       ),
                     ),
                     const SizedBox(height: 20),
