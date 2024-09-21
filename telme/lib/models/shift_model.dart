@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ShiftModel {
+  String? shiftId;
   String name;
   String location;
   DateTime startTime;
@@ -9,6 +10,7 @@ class ShiftModel {
   DateTime? clockOut;
 
   ShiftModel({
+    this.shiftId,
     required this.name,
     required this.location,
     required this.startTime,
@@ -17,9 +19,13 @@ class ShiftModel {
     this.clockOut,
   });
 
+
+  
+
   factory ShiftModel.fromJson(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ShiftModel(
+      shiftId: doc.id,
       name: data['name'] ?? '',
       location: data['location'] ?? '',
       startTime: (data['startTime'] as Timestamp).toDate(),

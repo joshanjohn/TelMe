@@ -7,5 +7,6 @@ class AppImages {
   static const shiftIcon = "assets/icons/shift.png";
 
   // home screen image
-  static const no_shift = "assets/images/home/no_work.gif";
+  static const no_work = "assets/images/home/no_work.gif";
+  static const no_shift = "assets/images/home/no-shifts.gif";
 }

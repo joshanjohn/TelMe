@@ -7,7 +7,7 @@ import 'package:telme/router/routes.dart';
 void main() async {
   // Ensures Flutter framework is initialized before running the app
   WidgetsFlutterBinding.ensureInitialized();
-  // Initializes Firebase
+  // Initializes Firebase§
   await Firebase.initializeApp();
   // Runs the MyApp widget
   runApp(const MyApp());

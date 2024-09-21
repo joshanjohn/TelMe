@@ -1,13 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:telme/views/sections/home/home.dart';
+import 'package:telme/models/shift_model.dart';
+import 'package:telme/utils/common/widgets/label_time.dart';
 
 class ShiftTiming extends StatelessWidget {
   const ShiftTiming({
-    super.key,
-    required this.widget,
+    super.key, required this.shift,
   });
-
-  final HomeSection widget;
+  final ShiftModel shift;
 
   @override
   Widget build(BuildContext context) {
@@ -17,40 +18,10 @@ class ShiftTiming extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         // start time
-        RichText(
-          text: TextSpan(
-            text: "start time\n",
-            style: _themeData.textTheme.displayMedium!
-                .copyWith(fontStyle: FontStyle.italic),
-            children: [
-              TextSpan(
-                text: "9:00",
-                style: _themeData.textTheme.displayMedium!.copyWith(
-                  color: Color.fromARGB(255, 44, 51, 186),
-                ),
-              )
-            ],
-          ),
-          textAlign: TextAlign.center,
-        ),
+        LabelTime(label: "start time", time: shift.startTime,),
 
         // end time
-        RichText(
-          text: TextSpan(
-            text: "end time\n",
-            style: _themeData.textTheme.displayMedium!
-                .copyWith(fontStyle: FontStyle.italic),
-            children: [
-              TextSpan(
-                text: "--/--",
-                style: _themeData.textTheme.displayMedium!.copyWith(
-                  color: Color.fromARGB(255, 44, 51, 186),
-                ),
-              )
-            ],
-          ),
-          textAlign: TextAlign.center,
-        ),
+        LabelTime(label: "end time", time: shift.endTime,)
       ],
     );
   }

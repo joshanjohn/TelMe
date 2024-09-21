@@ -1,53 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:telme/views/sections/home/home.dart';
+import 'package:telme/models/shift_model.dart';
+import 'package:telme/utils/common/widgets/label_time.dart';
 
 class ClockTiming extends StatelessWidget {
-  const ClockTiming({super.key, required this.widget});
-
-  final HomeSection widget;
+  const ClockTiming({super.key, required this.shift});
+  final ShiftModel shift;
 
   @override
   Widget build(BuildContext context) {
-    final _themeData = Theme.of(context);
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         // start time
-        RichText(
-          text: TextSpan(
-            text: "clock In\n",
-            style: _themeData.textTheme.displayMedium!
-                .copyWith(fontStyle: FontStyle.italic),
-            children: [
-              TextSpan(
-                text: "9:00",
-                style: _themeData.textTheme.titleLarge!.copyWith(
-                  color: Color.fromARGB(255, 44, 51, 186),
-                ),
-              )
-            ],
-          ),
-          textAlign: TextAlign.center,
-        ),
+        LabelTime(label: "clock In", time: shift.clockIn),
 
         // end time
-        RichText(
-          text: TextSpan(
-            text: "clock out\n",
-            style: _themeData.textTheme.displayMedium!
-                .copyWith(fontStyle: FontStyle.italic),
-            children: [
-              TextSpan(
-                text: "--/--",
-                style: _themeData.textTheme.titleLarge!.copyWith(
-                  color: Color.fromARGB(255, 44, 51, 186),
-                ),
-              )
-            ],
-          ),
-          textAlign: TextAlign.center,
-        ),
+        LabelTime(label: "clock out", time: shift.clockOut),
       ],
     );
   }

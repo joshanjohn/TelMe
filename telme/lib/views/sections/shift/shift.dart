@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:telme/models/meeting_model.dart';
+import 'package:telme/services/meeting_service.dart';
 import 'package:telme/utils/constants/Image_string.dart';
 import 'package:telme/views/widgets/shift/list_of_shifts.dart';
 
@@ -12,7 +15,7 @@ class ShiftSection extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        backgroundColor: Color.fromARGB(255, 157, 32, 215),
+        backgroundColor: const Color.fromARGB(255, 157, 32, 215),
         actions: [
           IconButton(
             onPressed: () => GoRouter.of(context).push('/addShift'),
@@ -29,7 +32,7 @@ class ShiftSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Image.asset(
-             AppImages.shiftIcon,
+              AppImages.shiftIcon,
               width: 40,
               height: 40,
             ),
@@ -46,11 +49,14 @@ class ShiftSection extends StatelessWidget {
           ],
         ),
       ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
+      body: const Padding(
+        padding: EdgeInsets.all(8.0),
         child: ListOfShifts(),
       ),
+
+     
     );
   }
 }
+
+// 

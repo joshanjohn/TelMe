@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:telme/models/shift_model.dart';
 import 'package:telme/services/shift_services/shift_service.dart';
 import 'package:telme/utils/common/widgets/custom_textfield.dart';
@@ -100,7 +101,7 @@ class AddShift extends StatelessWidget {
                             endTime: _endDateTimeNotifier.value!,
                           ),context
                         ).then((value){
-                          
+                        context.pop();
                         });
                       }
                     },

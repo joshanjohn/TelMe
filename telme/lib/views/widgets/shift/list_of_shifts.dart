@@ -4,9 +4,11 @@ import 'package:telme/models/shift_model.dart';
 import 'package:telme/models/user_model.dart';
 import 'package:telme/services/shift_services/shift_service.dart';
 import 'package:telme/services/user_services/user_service.dart';
+import 'package:telme/utils/constants/Image_string.dart';
+import 'package:telme/utils/helpers/helper_function.dart';
 
 class ListOfShifts extends StatefulWidget {
-  ListOfShifts({
+  const ListOfShifts({
     super.key,
   });
 
@@ -44,7 +46,8 @@ class _ListOfShiftsState extends State<ListOfShifts> {
     // Check if user is null before building the StreamBuilder
     if (user == null) {
       return const Center(
-        child: CircularProgressIndicator(), // Show a loading indicator while user is being fetched
+        child:
+            CircularProgressIndicator(), // Show a loading indicator while user is being fetched
       );
     }
 
@@ -52,7 +55,9 @@ class _ListOfShiftsState extends State<ListOfShifts> {
     final userId = user?.userId ?? '';
 
     return StreamBuilder<List<ShiftModel>>(
-      stream: userId.isNotEmpty ? _shiftService.fetchShiftsStream(userId: userId) : null,
+      stream: userId.isNotEmpty
+          ? _shiftService.fetchShiftsStream(userId: userId)
+          : null,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
@@ -64,7 +69,16 @@ class _ListOfShiftsState extends State<ListOfShifts> {
           );
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Center(
-            child: Text('No shifts available for user $userId'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(AppImages.no_shift),
+                Text(
+                  'No upcoming Shifts',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
           );
         } else {
           List<ShiftModel> shifts = snapshot.data!;
@@ -89,22 +103,22 @@ class _ListOfShiftsState extends State<ListOfShifts> {
                   ),
                 ),
                 leading: Text(
-                  _shiftService.extractShiftStamp(
+                  AppHelper.extractShiftStamp(
                     dateTime: shift.startTime,
                     format: 'dd\nMMM',
                   ),
-                  style: _themeData.textTheme.displayLarge!.copyWith(
-                      color: const Color.fromARGB(236, 98, 31, 114)),
+                  style: _themeData.textTheme.displayLarge!
+                      .copyWith(color: const Color.fromARGB(236, 98, 31, 114)),
                 ),
                 subtitle: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${_shiftService.extractShiftStamp(
+                      '${AppHelper.extractShiftStamp(
                         dateTime: shift.startTime,
                         format: 'HH:mm',
-                      )} \t-\t ${_shiftService.extractShiftStamp(
+                      )} \t-\t ${AppHelper.extractShiftStamp(
                         dateTime: shift.endTime,
                         format: 'HH:mm',
                       )}',

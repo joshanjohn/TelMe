@@ -1,8 +1,7 @@
-import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:telme/models/shift_model.dart';
 import 'package:telme/services/user_services/user_service.dart';
 
@@ -20,30 +19,7 @@ class ShiftService {
     });
   }
 
-  // Fetch the current shift based on current time
-  Stream<ShiftModel?> getCurrentShift({required String userId}) {
-    final _shiftCollection = _userCollection.doc(userId).collection('Shifts');
 
-    return _shiftCollection.snapshots().map((querySnapshot) {
-      final now = DateTime.now();
-      final closestShiftDoc = querySnapshot.docs.where((doc) {
-        final shift = ShiftModel.fromJson(doc);
-        return shift.startTime.isAfter(now) &&
-            shift.startTime.isBefore(now.add(Duration(minutes: 15)));
-      }).toList();
-
-      if (closestShiftDoc.isNotEmpty) {
-        return ShiftModel.fromJson(closestShiftDoc.first);
-      } else {
-        return null; // No current shift found
-      }
-    });
-  }
-
-  String extractShiftStamp(
-      {required DateTime dateTime, required String format}) {
-    return DateFormat(format).format(dateTime);
-  }
 
   Stream<ShiftModel?> getUpcomingShift() async* {
     final currentTime = DateTime.now();
@@ -56,6 +32,7 @@ class ShiftService {
     // Query shifts where startTime is within 15 minutes and endTime is greater than now
     yield* shiftsCollection
         .where('startTime', isGreaterThanOrEqualTo: currentTime)
+        .where('clockOut', isNull: true)
         .where(
           'startTime',
           isLessThanOrEqualTo: currentTime.add(const Duration(minutes: 15)),
@@ -65,8 +42,9 @@ class ShiftService {
       // Check if there is any shift
       if (snapshot.docs.isNotEmpty) {
         // Return the first shift
-        print(snapshot.docs.length);
-        return ShiftModel.fromJson(snapshot.docs[0]);
+        print("fetch upcoming shifts length = ${snapshot.docs.length}");
+        print(snapshot.docs.first.get('clockIn'));
+        return ShiftModel.fromJson(snapshot.docs.first);
       } else {
         // No upcoming shift found
         return null;
@@ -82,6 +60,35 @@ class ShiftService {
           .collection('Shifts')
           .doc()
           .set(shift.toJson());
+    } on FirebaseException catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> markClockIn(String shiftId) async {
+    // function to update clock In time
+    try {
+      SharedPreferences _pref = await SharedPreferences.getInstance();
+      String? userId = await _pref.getString('userId');
+
+      _userCollection.doc(userId).collection('Shifts').doc(shiftId).update({
+        'clockIn': Timestamp.fromDate(DateTime.now()),
+      });
+    } on FirebaseException catch (e) {
+      print(e);
+    }
+  }
+
+
+  Future<void> markClockOut(String shiftId) async {
+    // function to update clock In time
+    try {
+      SharedPreferences _pref = await SharedPreferences.getInstance();
+      String? userId = await _pref.getString('userId');
+
+      _userCollection.doc(userId).collection('Shifts').doc(shiftId).update({
+        'clockOut': Timestamp.fromDate(DateTime.now()),
+      });
     } on FirebaseException catch (e) {
       print(e);
     }
