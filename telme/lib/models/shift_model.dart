@@ -23,13 +23,19 @@ class Shift {
 
   factory Shift.fromJson(Map<String, dynamic> json) {
     return Shift(
-      id: json['id'],
-      title: json['title'],
-      location: json['location'],
-      startTime: DateTime.parse(json['start_time']),
-      endTime: DateTime.parse(json['end_time']),
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      location: json['location'] ?? '',
+      startTime: json['start_time'] != null 
+          ? DateTime.parse(json['start_time']) 
+          : DateTime.now(),
+      endTime: json['end_time'] != null 
+          ? DateTime.parse(json['end_time']) 
+          : DateTime.now(),
       createdBy: json['created_by'],
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
       assignedEmployees: (json['assigned_employees'] as List?)
               ?.map((e) => Profile.fromJson(e))
               .toList() ??

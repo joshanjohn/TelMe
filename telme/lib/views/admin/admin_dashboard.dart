@@ -118,8 +118,19 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> with SingleTick
         StreamBuilder<List<Shift>>(
           stream: shiftsStream,
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return SliverFillRemaining(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Text('Database Error: ${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+                  ),
+                ),
+              );
+            }
             if (!snapshot.hasData) return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
             final shifts = snapshot.data!;
+            if (shifts.isEmpty) return const SliverFillRemaining(child: Center(child: Text('No upcoming shifts found.')));
             return SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _buildShiftCard(shifts[index], index),
@@ -375,6 +386,7 @@ class _ShiftFormSheetState extends ConsumerState<_ShiftFormSheet> {
                 final staff = profiles
                     .where((p) => p.role == UserRole.employee)
                     .toList();
+                    
                 return MultiSelectBottomSheetField<Profile?>(
                   initialValue: _assigned,
                   initialChildSize: 0.4,
@@ -383,12 +395,10 @@ class _ShiftFormSheetState extends ConsumerState<_ShiftFormSheet> {
                   buttonText: const Text("Assign Employees"),
                   title: const Text("Staff"),
                   items: staff.map((p) => MultiSelectItem<Profile?>(p, p.fullName)).toList(),
-                  onConfirm: (values) => setState(() => _assigned = values.whereType<Profile>().toList()),
+                  onConfirm: (List<Profile?> values) => setState(() => _assigned = values.whereType<Profile>().toList()),
                   chipDisplay: MultiSelectChipDisplay(
                     items: _assigned.map((p) => MultiSelectItem<Profile?>(p, p.fullName)).toList(),
-                    onTap: (item) => setState(() {
-                      if (item != null) _assigned.remove(item);
-                    }),
+                    onTap: (item) => setState(() => _assigned.removeWhere((p) => p.id == (item as Profile?)?.id)),
                   ),
                 );
               },

@@ -1,6 +1,8 @@
+import 'package:equatable/equatable.dart';
+
 enum UserRole { admin, employee }
 
-class Profile {
+class Profile extends Equatable {
   final String id;
   final String fullName;
   final String email;
@@ -17,11 +19,13 @@ class Profile {
 
   factory Profile.fromJson(Map<String, dynamic> json) {
     return Profile(
-      id: json['id'],
-      fullName: json['full_name'] ?? '',
+      id: json['id'] ?? '',
+      fullName: json['full_name'] ?? 'Unknown',
       email: json['email'] ?? '',
       role: json['role'] == 'admin' ? UserRole.admin : UserRole.employee,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
     );
   }
 
@@ -34,4 +38,7 @@ class Profile {
       'created_at': createdAt.toIso8601String(),
     };
   }
+
+  @override
+  List<Object?> get props => [id, fullName, email, role, createdAt];
 }

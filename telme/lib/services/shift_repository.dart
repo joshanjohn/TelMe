@@ -16,20 +16,54 @@ class ShiftRepository {
 
   // Stream of only shifts assigned to a specific user
   Stream<List<Shift>> myShiftsStream(String userId) => _supabase
-      .from('detailed_shifts')
+      .from('shifts')
       .stream(primaryKey: ['id'])
       .order('start_time')
-      .map((data) => data
-          .map((json) => Shift.fromJson(json))
-          .where((s) => s.assignedEmployees.any((p) => p.id == userId))
-          .toList());
+      .asyncMap((data) async {
+        try {
+          final ids = data.map((d) => d['id']).toList();
+          if (ids.isEmpty) return [];
+          
+          final response = await _supabase
+              .from('detailed_shifts')
+              .select()
+              .inFilter('id', ids)
+              .order('start_time')
+              .timeout(const Duration(seconds: 10));
+              
+          return (response as List)
+              .map((json) => Shift.fromJson(json))
+              .where((s) => s.assignedEmployees.any((p) => p.id == userId))
+              .toList();
+        } catch (e) {
+          print('Assigned shifts stream error: $e');
+          throw e;
+        }
+      });
 
   // Stream of all shifts for Admin
   Stream<List<Shift>> get shiftsStream => _supabase
-      .from('detailed_shifts')
+      .from('shifts')
       .stream(primaryKey: ['id'])
       .order('start_time')
-      .map((data) => data.map((json) => Shift.fromJson(json)).toList());
+      .asyncMap((data) async {
+        try {
+          final ids = data.map((d) => d['id']).toList();
+          if (ids.isEmpty) return [];
+          
+          final response = await _supabase
+              .from('detailed_shifts')
+              .select()
+              .inFilter('id', ids)
+              .order('start_time')
+              .timeout(const Duration(seconds: 10));
+              
+          return (response as List).map((json) => Shift.fromJson(json)).toList();
+        } catch (e) {
+          print('Admin shifts stream error: $e');
+          throw e;
+        }
+      });
 
   // Stream of logs for a specific user
   Stream<List<ShiftLog>> userLogsStream(String userId) => _supabase
