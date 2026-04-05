@@ -1,31 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:telme/utils/constants/dart_theme.dart';
-import 'package:telme/utils/constants/light_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:flutter/foundation.dart';
+import 'package:telme/core/constants/theme.dart';
 import 'package:telme/router/routes.dart';
 
 void main() async {
-  // Ensures Flutter framework is initialized before running the app
   WidgetsFlutterBinding.ensureInitialized();
-  // Initializes Firebase§
-  await Firebase.initializeApp();
-  // Runs the MyApp widget
-  runApp(const MyApp());
+  
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
+  
+  try {
+    await Supabase.initialize(
+      url: 'https://toimnbvqcnapktktjbby.supabase.co',
+      anonKey: 'sb_publishable_VhUawyV8qKEWaFGjJZZgJQ_eeQ96Kpm',
+    );
+  } catch (e) {
+    debugPrint('Supabase Initialization Error: $e');
+    if (kIsWeb) {
+      runApp(MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text('Initialization Error: $e\nPlease check your internet connection or Supabase configuration.'),
+            ),
+          ),
+        ),
+      ));
+      return;
+    }
+  }
+
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-// Main application widget
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // Builds the widget tree
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
     return MaterialApp.router(
-      debugShowCheckedModeBanner: false, // Disables debug banner
-      routerConfig: appRouter,
-      title: 'Tel Me', // Sets the title of the app
-      darkTheme: DarkTheme(), // Sets the dark theme
-      theme: LightTheme(), // Sets the light theme
+      debugShowCheckedModeBanner: false,
+      routerConfig: router,
+      title: 'Tel Me',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
     );
   }
 }

@@ -1,48 +1,49 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:telme/models/profile_model.dart';
 
-class ShiftModel {
-  String? shiftId;
-  String name;
-  String location;
-  DateTime startTime;
-  DateTime endTime;
-  DateTime? clockIn;
-  DateTime? clockOut;
+class Shift {
+  final String id;
+  final String title;
+  final String location;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String? createdBy;
+  final DateTime createdAt;
+  final List<Profile> assignedEmployees;
 
-  ShiftModel({
-    this.shiftId,
-    required this.name,
+  Shift({
+    required this.id,
+    required this.title,
     required this.location,
     required this.startTime,
     required this.endTime,
-    this.clockIn,
-    this.clockOut,
+    this.createdBy,
+    required this.createdAt,
+    this.assignedEmployees = const [],
   });
 
-
-  
-
-  factory ShiftModel.fromJson(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return ShiftModel(
-      shiftId: doc.id,
-      name: data['name'] ?? '',
-      location: data['location'] ?? '',
-      startTime: (data['startTime'] as Timestamp).toDate(),
-      endTime: (data['endTime'] as Timestamp).toDate(),
-      clockIn: data['clockIn'] != null ? (data['clockIn'] as Timestamp).toDate() : null,
-      clockOut: data['clockOut'] != null ? (data['clockOut'] as Timestamp).toDate() : null,
+  factory Shift.fromJson(Map<String, dynamic> json) {
+    return Shift(
+      id: json['id'],
+      title: json['title'],
+      location: json['location'],
+      startTime: DateTime.parse(json['start_time']),
+      endTime: DateTime.parse(json['end_time']),
+      createdBy: json['created_by'],
+      createdAt: DateTime.parse(json['created_at']),
+      assignedEmployees: (json['assigned_employees'] as List?)
+              ?.map((e) => Profile.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'title': title,
       'location': location,
-      'startTime': Timestamp.fromDate(startTime),
-      'endTime': Timestamp.fromDate(endTime),
-      'clockIn': clockIn != null ? Timestamp.fromDate(clockIn!) : null,
-      'clockOut': clockOut != null ? Timestamp.fromDate(clockOut!) : null,
+      'start_time': startTime.toIso8601String(),
+      'end_time': endTime.toIso8601String(),
+      'created_by': createdBy,
     };
   }
 }
