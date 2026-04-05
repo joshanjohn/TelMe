@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:telme/models/shift_model.dart';
 import 'package:telme/models/shift_log_model.dart';
 
@@ -15,31 +16,37 @@ class ShiftRepository {
   }
 
   // Stream of only shifts assigned to a specific user
-  Stream<List<Shift>> myShiftsStream(String userId) => _supabase
-      .from('shifts')
-      .stream(primaryKey: ['id'])
-      .order('start_time')
-      .asyncMap((data) async {
-        try {
-          final ids = data.map((d) => d['id']).toList();
-          if (ids.isEmpty) return [];
-          
-          final response = await _supabase
-              .from('detailed_shifts')
-              .select()
-              .inFilter('id', ids)
-              .order('start_time')
-              .timeout(const Duration(seconds: 10));
-              
-          return (response as List)
-              .map((json) => Shift.fromJson(json))
-              .where((s) => s.assignedEmployees.any((p) => p.id == userId))
-              .toList();
-        } catch (e) {
-          print('Assigned shifts stream error: $e');
-          throw e;
-        }
-      });
+  // We merge events from BOTH tables so adding an assignment OR updating a shift triggers a re-fetch
+  Stream<List<Shift>> myShiftsStream(String userId) {
+    final assignmentStream = _supabase
+        .from('shift_assignments')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId);
+
+    final shiftStream = _supabase
+        .from('shifts')
+        .stream(primaryKey: ['id']);
+
+    return Rx.combineLatest2(assignmentStream, shiftStream, (assignments, shifts) => assignments)
+        .asyncMap((assignments) async {
+      try {
+        final ids = assignments.map((a) => a['shift_id'] as String).toList();
+        if (ids.isEmpty) return [];
+
+        final response = await _supabase
+            .from('detailed_shifts')
+            .select()
+            .inFilter('id', ids)
+            .order('start_time')
+            .timeout(const Duration(seconds: 10));
+
+        return (response as List).map((json) => Shift.fromJson(json)).toList();
+      } catch (e) {
+        print('Assigned shifts stream error: $e');
+        return [];
+      }
+    });
+  }
 
   // Stream of all shifts for Admin
   Stream<List<Shift>> get shiftsStream => _supabase
@@ -119,6 +126,26 @@ class ShiftRepository {
   // Delete a shift
   Future<void> deleteShift(String shiftId) async {
     await _supabase.from('shifts').delete().eq('id', shiftId);
+  }
+
+  Future<Shift?> getImminentShift(String userId) async {
+    final now = DateTime.now();
+    final shifts = await _supabase
+        .from('detailed_shifts')
+        .select()
+        .order('start_time');
+        
+    final mappedShifts = (shifts as List).map((json) => Shift.fromJson(json)).where((s) => s.assignedEmployees.any((p) => p.id == userId)).toList();
+    
+    try {
+      return mappedShifts.firstWhere((s) {
+        final diff = s.startTime.difference(now).inMinutes;
+        // Shift starts in less than 10 mins OR has already started but not ended yet
+        return (diff <= 10 && diff >= -60) || (now.isAfter(s.startTime) && now.isBefore(s.endTime));
+      });
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> clockIn(String shiftId, String userId) async {

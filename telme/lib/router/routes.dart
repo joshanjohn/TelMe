@@ -7,6 +7,8 @@ import 'package:telme/views/auth/login_screen.dart';
 import 'package:telme/views/auth/signup_screen.dart';
 import 'package:telme/views/admin/admin_dashboard.dart';
 import 'package:telme/views/employee/employee_dashboard.dart';
+import 'package:telme/views/employee/shift_details_page.dart';
+import 'package:telme/views/employee/clock_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -19,9 +21,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loggedIn = user != null;
       final isAuthPage = state.matchedLocation == '/login' || state.matchedLocation == '/register';
 
-      if (!loggedIn && !isAuthPage && state.matchedLocation != '/register') return '/login';
+      if (!loggedIn && !isAuthPage) return '/login';
       if (loggedIn && (isAuthPage || state.matchedLocation == '/')) return '/dashboard';
-      if (!loggedIn && state.matchedLocation == '/') return '/login';
       
       return null;
     },
@@ -32,15 +33,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) {
-          return profileFuture.when(
-            data: (profile) {
-              if (profile?.role == UserRole.admin) return const AdminDashboard();
-              return const EmployeeDashboard();
-            },
-            loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-            error: (e, s) => Scaffold(body: Center(child: Text('Error: $e'))),
-          );
+          final profile = profileFuture.value;
+          if (profile?.role == UserRole.admin) return const AdminDashboard();
+          return const EmployeeDashboard();
         },
+      ),
+      GoRoute(
+        path: '/shift/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ShiftDetailsPage(shiftId: id);
+        },
+      ),
+      GoRoute(
+        path: '/clock',
+        builder: (context, state) => const ClockPage(),
       ),
     ],
   );
