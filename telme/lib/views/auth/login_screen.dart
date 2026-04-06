@@ -16,13 +16,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _signIn() async {
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).signIn(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
       if (mounted) context.go('/dashboard');
     } catch (e) {
       if (mounted) {
@@ -38,8 +45,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -53,75 +62,129 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Spacer(),
-                const Icon(Icons.access_time_filled_rounded, size: 80, color: Color(0xFF6366F1))
-                    .animate()
-                    .scale(duration: 600.ms, curve: Curves.easeOutBack)
-                    .fadeIn(),
-                const SizedBox(height: 24),
-                Text(
-                  'Welcome Back',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
-                ).animate().slideY(begin: 0.3, end: 0).fadeIn(),
-                const SizedBox(height: 8),
-                Text(
-                  'Sign in to manage your shifts',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                ).animate().slideY(begin: 0.5, end: 0).fadeIn(delay: 100.ms),
-                const SizedBox(height: 48),
-                
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    hintText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(24, 24, 24, bottomInset + 24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: bottomInset > 0 ? 16 : 48),
+                      const Icon(
+                        Icons.access_time_filled_rounded,
+                        size: 80,
+                        color: Color(0xFF6366F1),
+                      )
+                          .animate()
+                          .scale(duration: 600.ms, curve: Curves.easeOutBack)
+                          .fadeIn(),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Welcome Back',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.displaySmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ).animate().slideY(begin: 0.3, end: 0).fadeIn(),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign in to manage your shifts',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                      )
+                          .animate()
+                          .slideY(begin: 0.5, end: 0)
+                          .fadeIn(delay: 100.ms),
+                      const SizedBox(height: 48),
+                      TextField(
+                        controller: _emailController,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'Email',
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      )
+                          .animate()
+                          .fadeIn(delay: 200.ms)
+                          .slideX(begin: -0.1, end: 0),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _isLoading ? null : _signIn(),
+                        decoration: InputDecoration(
+                          hintText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      )
+                          .animate()
+                          .fadeIn(delay: 300.ms)
+                          .slideX(begin: 0.1, end: 0),
+                      const SizedBox(height: 32),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _signIn,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Sign In',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ).animate().scale(delay: 400.ms),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Don't have an account? ",
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => context.go('/register'),
+                            child: const Text(
+                              'Register',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ).animate().fadeIn(delay: 500.ms),
+                      SizedBox(height: bottomInset > 0 ? 12 : 48),
+                    ],
                   ),
-                ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  ),
-                ).animate().fadeIn(delay: 300.ms).slideX(begin: 0.1, end: 0),
-                const SizedBox(height: 32),
-                
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _signIn,
-                  child: _isLoading 
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ).animate().scale(delay: 400.ms),
-                
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Don't have an account? ", style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
-                    TextButton(
-                      onPressed: () => context.go('/register'),
-                      child: const Text('Register', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ).animate().fadeIn(delay: 500.ms),
-                const Spacer(),
-              ],
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
