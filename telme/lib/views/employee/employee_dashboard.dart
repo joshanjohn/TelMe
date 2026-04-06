@@ -84,6 +84,7 @@ class _WeekPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final monthLabel = DateFormat('MMMM y').format(state.selectedDate);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -93,22 +94,8 @@ class _WeekPicker extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'Choose a week',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${DateFormat('MMM d').format(state.weekStart)} - ${DateFormat('MMM d, y').format(state.weekEnd)}',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
           TableCalendar<void>(
             firstDay: DateTime.utc(2024, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
@@ -124,9 +111,53 @@ class _WeekPicker extends StatelessWidget {
             onPageChanged: (focusedDay) {
               context.read<EmployeeScheduleCubit>().selectDate(focusedDay);
             },
-            headerStyle: const HeaderStyle(
+            headerStyle: HeaderStyle(
               formatButtonVisible: false,
-              titleCentered: false,
+              titleCentered: true,
+              titleTextFormatter: (_, __) => monthLabel,
+            ),
+            calendarBuilders: CalendarBuilders(
+              headerTitleBuilder: (context, day) {
+                return Center(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () async {
+                      final selected = await showDatePicker(
+                        context: context,
+                        initialDate: state.selectedDate,
+                        firstDate: DateTime.utc(2024, 1, 1),
+                        lastDate: DateTime.utc(2030, 12, 31),
+                      );
+                      if (!context.mounted || selected == null) {
+                        return;
+                      }
+                      context
+                          .read<EmployeeScheduleCubit>()
+                          .selectDate(selected);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            monthLabel,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.expand_more_rounded,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
             calendarStyle: CalendarStyle(
               selectedDecoration: BoxDecoration(
@@ -210,86 +241,17 @@ class _ScheduleBody extends StatelessWidget {
       );
     }
 
-    final groupedShifts = <DateTime, List<Shift>>{};
-    for (final shift in weeklyShifts) {
-      final dayKey = DateTime(
-          shift.startTime.year, shift.startTime.month, shift.startTime.day);
-      groupedShifts.putIfAbsent(dayKey, () => []).add(shift);
-    }
-
-    final weekDays = List.generate(
-      7,
-      (index) => state.weekStart.add(Duration(days: index)),
-    );
-
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      itemCount: weekDays.length,
-      itemBuilder: (context, dayIndex) {
-        final day = weekDays[dayIndex];
-        final dayKey = DateTime(day.year, day.month, day.day);
-        final dayShifts = groupedShifts[dayKey] ?? const <Shift>[];
-
-        return _DaySection(
-          day: day,
-          shifts: dayShifts,
-          state: state,
-          dayIndex: dayIndex,
+      itemCount: weeklyShifts.length,
+      itemBuilder: (context, index) {
+        final shift = weeklyShifts[index];
+        return _ShiftCard(
+          shift: shift,
+          log: state.logForShift(shift.id),
+          index: index,
         );
       },
-    );
-  }
-}
-
-class _DaySection extends StatelessWidget {
-  const _DaySection({
-    required this.day,
-    required this.shifts,
-    required this.state,
-    required this.dayIndex,
-  });
-
-  final DateTime day;
-  final List<Shift> shifts;
-  final EmployeeScheduleState state;
-  final int dayIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            DateFormat('EEEE, MMM d').format(day),
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          if (shifts.isEmpty)
-            Text(
-              'No shifts',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.disabledColor),
-            )
-          else
-            ...shifts.asMap().entries.map(
-                  (entry) => _ShiftCard(
-                    shift: entry.value,
-                    log: state.logForShift(entry.value.id),
-                    index: (dayIndex * 10) + entry.key,
-                  ),
-                ),
-        ],
-      ),
     );
   }
 }

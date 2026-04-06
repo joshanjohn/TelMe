@@ -51,29 +51,10 @@ class _ClockPageState extends ConsumerState<ClockPage> {
       )..load(),
       child: BlocListener<ClockCubit, ClockState>(
         listenWhen: (previous, current) =>
-            previous.message != current.message && current.message != null,
+            previous.status != current.status &&
+            current.status == ClockStatus.success,
         listener: (context, state) async {
-          if (state.message == null) {
-            return;
-          }
-
-          if (state.status != ClockStatus.failure) {
-            await _playSuccess();
-          }
-
-          if (!context.mounted) {
-            return;
-          }
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message!),
-              backgroundColor: state.status == ClockStatus.failure
-                  ? Colors.red
-                  : Colors.green,
-            ),
-          );
-          context.read<ClockCubit>().clearMessage();
+          await _playSuccess();
         },
         child: const _ClockPageView(),
       ),
@@ -151,6 +132,12 @@ class _ClockPageView extends StatelessWidget {
                 ),
               ),
             ),
+          );
+        }
+
+        if (state.status == ClockStatus.success) {
+          return _ClockSuccessScreen(
+            title: state.successTitle ?? 'Clock Successful',
           );
         }
 
@@ -257,7 +244,14 @@ class _ClockButton extends StatelessWidget {
         height: 200,
         width: 200,
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary,
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary,
+              theme.colorScheme.secondary,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -286,11 +280,112 @@ class _ClockButton extends StatelessWidget {
                   ],
                 ),
         ),
-      ).animate().scale(
+      )
+          .animate(onPlay: (controller) => controller.repeat(reverse: true))
+          .scale(
             begin: const Offset(1, 1),
-            end: const Offset(1.05, 1.05),
-            duration: 1.seconds,
+            end: const Offset(1.06, 1.06),
+            duration: 1400.ms,
+            curve: Curves.easeInOut,
+          )
+          .then()
+          .shimmer(
+            duration: 1800.ms,
+            color: Colors.white.withValues(alpha: 0.2),
           ),
+    );
+  }
+}
+
+class _ClockSuccessScreen extends StatefulWidget {
+  const _ClockSuccessScreen({required this.title});
+
+  final String title;
+
+  @override
+  State<_ClockSuccessScreen> createState() => _ClockSuccessScreenState();
+}
+
+class _ClockSuccessScreenState extends State<_ClockSuccessScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(const Duration(seconds: 5), () {
+      if (!mounted) {
+        return;
+      }
+      context.read<ClockCubit>().clearSuccessState();
+      context.go('/dashboard');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  onPressed: () {
+                    context.read<ClockCubit>().clearSuccessState();
+                    context.go('/dashboard');
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                width: 132,
+                height: 132,
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  size: 88,
+                  color: Colors.green,
+                ),
+              ).animate().scale(
+                    begin: const Offset(0.7, 0.7),
+                    end: const Offset(1, 1),
+                    duration: 600.ms,
+                    curve: Curves.elasticOut,
+                  ),
+              const SizedBox(height: 24),
+              Text(
+                widget.title,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your shift attendance was updated successfully.',
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Returning to your shift list in 5 seconds.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -307,17 +402,11 @@ class _ClockedInMessage extends StatelessWidget {
         const Icon(Icons.check_circle_rounded, size: 80, color: Colors.green),
         const SizedBox(height: 16),
         Text(
-          'Clocked In',
+          'Already Clocked In',
           style: theme.textTheme.headlineSmall?.copyWith(
             color: Colors.green,
             fontWeight: FontWeight.bold,
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Your clock-in has been saved to Supabase.',
-          style: theme.textTheme.bodyMedium,
-          textAlign: TextAlign.center,
         ),
       ],
     );

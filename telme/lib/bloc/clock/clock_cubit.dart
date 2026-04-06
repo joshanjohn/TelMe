@@ -6,7 +6,7 @@ import 'package:telme/models/shift_log_model.dart';
 import 'package:telme/models/shift_model.dart';
 import 'package:telme/services/shift_repository.dart';
 
-enum ClockStatus { initial, loading, ready, empty, failure }
+enum ClockStatus { initial, loading, ready, success, empty, failure }
 
 class ClockState extends Equatable {
   const ClockState({
@@ -15,6 +15,7 @@ class ClockState extends Equatable {
     this.currentLog,
     this.isSubmitting = false,
     this.message,
+    this.successTitle,
   });
 
   final ClockStatus status;
@@ -22,6 +23,7 @@ class ClockState extends Equatable {
   final ShiftLog? currentLog;
   final bool isSubmitting;
   final String? message;
+  final String? successTitle;
 
   bool get isClockedIn => currentLog?.clockIn != null;
   bool get isClockedOut => currentLog?.clockOut != null;
@@ -32,9 +34,11 @@ class ClockState extends Equatable {
     ShiftLog? currentLog,
     bool? isSubmitting,
     String? message,
+    String? successTitle,
     bool clearShift = false,
     bool clearLog = false,
     bool clearMessage = false,
+    bool clearSuccessTitle = false,
   }) {
     return ClockState(
       status: status ?? this.status,
@@ -42,12 +46,14 @@ class ClockState extends Equatable {
       currentLog: clearLog ? null : (currentLog ?? this.currentLog),
       isSubmitting: isSubmitting ?? this.isSubmitting,
       message: clearMessage ? null : (message ?? this.message),
+      successTitle:
+          clearSuccessTitle ? null : (successTitle ?? this.successTitle),
     );
   }
 
   @override
   List<Object?> get props =>
-      [status, currentShift, currentLog, isSubmitting, message];
+      [status, currentShift, currentLog, isSubmitting, message, successTitle];
 }
 
 class ClockCubit extends Cubit<ClockState> {
@@ -85,7 +91,11 @@ class ClockCubit extends Cubit<ClockState> {
 
   Future<void> load() async {
     emit(state.copyWith(
-        status: ClockStatus.loading, isSubmitting: false, clearMessage: true));
+      status: ClockStatus.loading,
+      isSubmitting: false,
+      clearMessage: true,
+      clearSuccessTitle: true,
+    ));
 
     try {
       final shift = await _shiftRepository.getImminentShift(userId);
@@ -108,6 +118,7 @@ class ClockCubit extends Cubit<ClockState> {
           currentShift: shift,
           currentLog: log,
           isSubmitting: false,
+          clearSuccessTitle: true,
         ),
       );
     } catch (error) {
@@ -127,7 +138,11 @@ class ClockCubit extends Cubit<ClockState> {
       return;
     }
 
-    emit(state.copyWith(isSubmitting: true, clearMessage: true));
+    emit(state.copyWith(
+      isSubmitting: true,
+      clearMessage: true,
+      clearSuccessTitle: true,
+    ));
 
     try {
       await _shiftRepository.clockIn(shift.id, userId);
@@ -135,10 +150,10 @@ class ClockCubit extends Cubit<ClockState> {
 
       emit(
         state.copyWith(
-          status: ClockStatus.ready,
+          status: ClockStatus.success,
           currentLog: refreshedLog,
           isSubmitting: false,
-          message: 'Clocked in successfully.',
+          successTitle: 'Clock In Successful',
         ),
       );
     } catch (error) {
@@ -154,6 +169,13 @@ class ClockCubit extends Cubit<ClockState> {
 
   void clearMessage() {
     emit(state.copyWith(clearMessage: true));
+  }
+
+  void clearSuccessState() {
+    emit(state.copyWith(
+      status: ClockStatus.ready,
+      clearSuccessTitle: true,
+    ));
   }
 
   @override
