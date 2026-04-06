@@ -1,12 +1,11 @@
 buildscript {
-    ext.kotlin_version = '1.9.24'
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -22,8 +21,38 @@ rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
 subprojects {
     project.evaluationDependsOn(':app')
+    
+    def setupNamespace = { p ->
+        if (p.hasProperty('android')) {
+            p.android {
+                if (namespace == null) {
+                    namespace p.group
+                }
+                
+                // Synchronize Java 17 for all subprojects
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+    }
+
+    if (project.state.executed) {
+        setupNamespace(project)
+    } else {
+        project.afterEvaluate { setupNamespace(it) }
+    }
+
+    // Force Kotlin JVM target 17 for all subprojects
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
 }
 
 tasks.register("clean", Delete) {
