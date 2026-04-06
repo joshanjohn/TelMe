@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:telme/models/shift_log_model.dart';
+import 'package:telme/models/shift_model.dart';
 import 'package:telme/services/auth_repository.dart';
 import 'package:telme/services/shift_repository.dart';
 import 'package:telme/models/profile_model.dart';
@@ -17,7 +19,24 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 
 final userProfileProvider = FutureProvider<Profile?>((ref) async {
   final authState = ref.watch(authStateProvider).value;
-  final user = authState?.session?.user ?? Supabase.instance.client.auth.currentUser;
+  final user =
+      authState?.session?.user ?? Supabase.instance.client.auth.currentUser;
   if (user == null) return null;
   return ref.watch(authRepositoryProvider).getProfile(user.id);
+});
+
+final myShiftsProvider = StreamProvider<List<Shift>>((ref) {
+  final user = Supabase.instance.client.auth.currentUser;
+  if (user == null) return Stream.value([]);
+  return ref.watch(shiftRepositoryProvider).myShiftsStream(user.id);
+});
+
+final adminShiftsProvider = StreamProvider<List<Shift>>((ref) {
+  return ref.watch(shiftRepositoryProvider).shiftsStream;
+});
+
+final userLogsProvider = StreamProvider<List<ShiftLog>>((ref) {
+  final user = Supabase.instance.client.auth.currentUser;
+  if (user == null) return Stream.value([]);
+  return ref.watch(shiftRepositoryProvider).userLogsStream(user.id);
 });

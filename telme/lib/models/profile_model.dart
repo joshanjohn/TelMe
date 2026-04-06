@@ -9,7 +9,7 @@ class Profile extends Equatable {
   final UserRole role;
   final DateTime createdAt;
 
-  Profile({
+  const Profile({
     required this.id,
     required this.fullName,
     required this.email,
@@ -23,8 +23,8 @@ class Profile extends Equatable {
       fullName: json['full_name'] ?? 'Unknown',
       email: json['email'] ?? '',
       role: json['role'] == 'admin' ? UserRole.admin : UserRole.employee,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
           : DateTime.now(),
     );
   }

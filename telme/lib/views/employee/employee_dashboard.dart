@@ -1,34 +1,59 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:intl/intl.dart';
-import 'package:telme/core/providers/providers.dart';
-import 'package:telme/models/shift_model.dart';
-import 'package:telme/models/shift_log_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:telme/bloc/employee_schedule/employee_schedule_cubit.dart';
+import 'package:telme/core/providers/providers.dart';
+import 'package:telme/models/shift_log_model.dart';
+import 'package:telme/models/shift_model.dart';
 
-class EmployeeDashboard extends ConsumerStatefulWidget {
+class EmployeeDashboard extends ConsumerWidget {
   const EmployeeDashboard({super.key});
 
   @override
-  ConsumerState<EmployeeDashboard> createState() => _EmployeeDashboardState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('No authenticated user found.')),
+      );
+    }
+
+    return BlocProvider(
+      create: (_) => EmployeeScheduleCubit(
+        shiftRepository: ref.read(shiftRepositoryProvider),
+        userId: user.id,
+      )..subscribe(),
+      child: const _EmployeeDashboardView(),
+    );
+  }
 }
 
-class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
-  DateTime _selectedDate = DateTime.now();
+class _EmployeeDashboardView extends StatelessWidget {
+  const _EmployeeDashboardView();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = ref.read(authRepositoryProvider).currentUser;
-    final shiftsStream = user != null ? ref.watch(shiftRepositoryProvider).myShiftsStream(user.id) : null;
-    final logsStream = user != null ? ref.watch(shiftRepositoryProvider).userLogsStream(user.id) : null;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Schedule', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+        title: Text(
+          'My Schedule',
+          style: theme.textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
         actions: [
-          IconButton(onPressed: () => ref.read(authRepositoryProvider).signOut(), icon: const Icon(Icons.logout_rounded)),
+          Consumer(
+            builder: (context, ref, child) {
+              return IconButton(
+                onPressed: () => ref.read(authRepositoryProvider).signOut(),
+                icon: const Icon(Icons.logout_rounded),
+              );
+            },
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -36,93 +61,56 @@ class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
         icon: const Icon(Icons.alarm_on_rounded),
         label: const Text('Clock In/Out'),
       ),
-      body: Column(
-        children: [
-          _buildWeeklyHeader(theme),
-          Expanded(
-            child: StreamBuilder<List<Shift>>(
-              stream: shiftsStream,
-              builder: (context, shiftsSnapshot) {
-                if (shiftsSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                
-                final allShifts = shiftsSnapshot.data ?? [];
-                final dailyShifts = allShifts.where((s) => 
-                  s.startTime.year == _selectedDate.year &&
-                  s.startTime.month == _selectedDate.month &&
-                  s.startTime.day == _selectedDate.day
-                ).toList();
-
-                if (dailyShifts.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(48.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.event_note_rounded, size: 64, color: theme.disabledColor),
-                          const SizedBox(height: 16),
-                          Text('No shifts for this day.', style: theme.textTheme.titleMedium?.copyWith(color: theme.disabledColor)),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return StreamBuilder<List<ShiftLog>>(
-                  stream: logsStream,
-                  builder: (context, logsSnapshot) {
-                    final logs = logsSnapshot.data ?? [];
-                    
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(24),
-                      itemCount: dailyShifts.length,
-                      itemBuilder: (context, index) {
-                        final shift = dailyShifts[index];
-                        final log = logs.firstWhere((l) => l.shiftId == shift.id, orElse: () => ShiftLog(id: '', shiftId: '', userId: '', createdAt: DateTime.now()));
-                        
-                        return _buildShiftCard(shift, log);
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+      body: BlocBuilder<EmployeeScheduleCubit, EmployeeScheduleState>(
+        builder: (context, state) {
+          return Column(
+            children: [
+              _WeeklyHeader(selectedDate: state.selectedDate),
+              Expanded(child: _ScheduleBody(state: state)),
+            ],
+          );
+        },
       ),
     );
   }
+}
 
-  Widget _buildWeeklyHeader(ThemeData theme) {
+class _WeeklyHeader extends StatelessWidget {
+  const _WeeklyHeader({required this.selectedDate});
+
+  final DateTime selectedDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final today = DateTime.now();
     final firstDayOfWeek = today.subtract(Duration(days: today.weekday - 1));
-    
-    return Container(
+
+    return SizedBox(
       height: 100,
-      padding: const EdgeInsets.symmetric(vertical: 12),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: 7,
         itemBuilder: (context, index) {
           final date = firstDayOfWeek.add(Duration(days: index));
-          final isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month;
-          final isToday = date.day == today.day && date.month == today.month;
+          final isSelected = _isSameDay(date, selectedDate);
+          final isToday = _isSameDay(date, today);
 
           return GestureDetector(
-            onTap: () => setState(() => _selectedDate = date),
+            onTap: () => context.read<EmployeeScheduleCubit>().selectDate(date),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 60,
               margin: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
-                color: isSelected 
-                    ? theme.colorScheme.primary 
-                    : (isToday ? theme.colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent),
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : (isToday
+                        ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                        : Colors.transparent),
                 borderRadius: BorderRadius.circular(16),
-                border: isToday && !isSelected 
+                border: isToday && !isSelected
                     ? Border.all(color: theme.colorScheme.primary, width: 2)
                     : null,
               ),
@@ -132,7 +120,9 @@ class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
                   Text(
                     DateFormat('E').format(date).toUpperCase(),
                     style: TextStyle(
-                      color: isSelected ? Colors.white : theme.textTheme.bodySmall?.color,
+                      color: isSelected
+                          ? Colors.white
+                          : theme.textTheme.bodySmall?.color,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -141,7 +131,9 @@ class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
                   Text(
                     date.day.toString(),
                     style: TextStyle(
-                      color: isSelected ? Colors.white : theme.textTheme.titleMedium?.color,
+                      color: isSelected
+                          ? Colors.white
+                          : theme.textTheme.titleMedium?.color,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -154,11 +146,99 @@ class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
       ),
     );
   }
+}
 
-  Widget _buildShiftCard(Shift shift, ShiftLog log) {
+class _ScheduleBody extends StatelessWidget {
+  const _ScheduleBody({required this.state});
+
+  final EmployeeScheduleState state;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isClockedIn = log.clockIn != null;
-    final isClockedOut = log.clockOut != null;
+
+    if (state.status == EmployeeScheduleStatus.loading &&
+        state.shifts.isEmpty &&
+        state.logs.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.status == EmployeeScheduleStatus.failure) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                state.errorMessage ?? 'Unable to load your schedule.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () =>
+                    context.read<EmployeeScheduleCubit>().subscribe(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final dailyShifts = state.dailyShifts;
+    if (dailyShifts.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(48),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.event_note_rounded,
+                  size: 64, color: theme.disabledColor),
+              const SizedBox(height: 16),
+              Text(
+                'No shifts for this day.',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(color: theme.disabledColor),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(24),
+      itemCount: dailyShifts.length,
+      itemBuilder: (context, index) {
+        final shift = dailyShifts[index];
+        final log = state.logForShift(shift.id);
+        return _ShiftCard(shift: shift, log: log, index: index);
+      },
+    );
+  }
+}
+
+class _ShiftCard extends StatelessWidget {
+  const _ShiftCard({
+    required this.shift,
+    required this.log,
+    required this.index,
+  });
+
+  final Shift shift;
+  final ShiftLog? log;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isClockedIn = log?.clockIn != null;
+    final isClockedOut = log?.clockOut != null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -180,38 +260,60 @@ class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
                       color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.work_outline_rounded, color: theme.colorScheme.primary),
+                    child: Icon(Icons.work_outline_rounded,
+                        color: theme.colorScheme.primary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(shift.title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        Text(
+                          shift.title,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
                         Text(shift.location, style: theme.textTheme.bodySmall),
                       ],
                     ),
                   ),
-                  _buildStatusChip(isClockedIn, isClockedOut),
+                  _StatusChip(
+                      isClockedIn: isClockedIn, isClockedOut: isClockedOut),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTimeBadge(theme, Icons.login_rounded, DateFormat.jm().format(shift.startTime)),
+                  _TimeBadge(
+                    icon: Icons.login_rounded,
+                    time: DateFormat.jm().format(shift.startTime),
+                  ),
                   const Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
-                  _buildTimeBadge(theme, Icons.logout_rounded, DateFormat.jm().format(shift.endTime)),
+                  _TimeBadge(
+                    icon: Icons.logout_rounded,
+                    time: DateFormat.jm().format(shift.endTime),
+                  ),
                 ],
               ),
             ],
           ),
         ),
       ),
-    ).animate().fadeIn().slideX(begin: 0.1, end: 0);
+    ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: 0.1, end: 0);
   }
+}
 
-  Widget _buildTimeBadge(ThemeData theme, IconData icon, String time) {
+class _TimeBadge extends StatelessWidget {
+  const _TimeBadge({required this.icon, required this.time});
+
+  final IconData icon;
+  final String time;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -222,15 +324,29 @@ class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
         children: [
           Icon(icon, size: 14, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Text(time, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(time,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         ],
       ),
     );
   }
+}
 
-  Widget _buildStatusChip(bool isClockedIn, bool isClockedOut) {
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.isClockedIn,
+    required this.isClockedOut,
+  });
+
+  final bool isClockedIn;
+  final bool isClockedOut;
+
+  @override
+  Widget build(BuildContext context) {
     String text = 'Incoming';
     Color color = Colors.grey;
+
     if (isClockedOut) {
       text = 'Done';
       color = Colors.green;
@@ -238,10 +354,24 @@ class _EmployeeDashboardState extends ConsumerState<EmployeeDashboard> {
       text = 'Active';
       color = Colors.blue;
     }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-      child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style:
+            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
     );
   }
+}
+
+bool _isSameDay(DateTime first, DateTime second) {
+  return first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
 }
