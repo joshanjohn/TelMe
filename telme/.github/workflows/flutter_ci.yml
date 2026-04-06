@@ -32,7 +32,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: telme
-        run: cd telmeflutter pub get
+        run: flutter pub get
 
       - name: Analyze project
         run: flutter analyze
