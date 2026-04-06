@@ -31,7 +31,8 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get
+        working-directory: telme
+        run: cd telmeflutter pub get
 
       - name: Analyze project
         run: flutter analyze
