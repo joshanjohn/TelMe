@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:telme/models/shift_log_model.dart';
@@ -53,10 +55,33 @@ class ClockCubit extends Cubit<ClockState> {
     required ShiftRepository shiftRepository,
     required this.userId,
   })  : _shiftRepository = shiftRepository,
-        super(const ClockState(status: ClockStatus.loading));
+        super(const ClockState(status: ClockStatus.loading)) {
+    _logsSubscription = _shiftRepository.userLogsStream(userId).listen(
+      (logs) {
+        final shiftId = state.currentShift?.id;
+        if (shiftId == null) {
+          return;
+        }
+
+        ShiftLog? matchingLog;
+        for (final log in logs) {
+          if (log.shiftId == shiftId) {
+            matchingLog = log;
+            break;
+          }
+        }
+
+        if (matchingLog != state.currentLog) {
+          emit(state.copyWith(
+              currentLog: matchingLog, clearLog: matchingLog == null));
+        }
+      },
+    );
+  }
 
   final ShiftRepository _shiftRepository;
   final String userId;
+  late final StreamSubscription<List<ShiftLog>> _logsSubscription;
 
   Future<void> load() async {
     emit(state.copyWith(
@@ -96,49 +121,24 @@ class ClockCubit extends Cubit<ClockState> {
     }
   }
 
-  Future<void> submitClockAction() async {
+  Future<void> submitClockIn() async {
     final shift = state.currentShift;
-    if (shift == null || state.isSubmitting) {
+    if (shift == null || state.isSubmitting || state.isClockedIn) {
       return;
     }
 
     emit(state.copyWith(isSubmitting: true, clearMessage: true));
 
     try {
-      if (state.isClockedIn) {
-        await _shiftRepository.clockOut(shift.id, userId);
-      } else {
-        await _shiftRepository.clockIn(shift.id, userId);
-      }
-
-      final successMessage = state.isClockedIn
-          ? 'Clocked out successfully.'
-          : 'Clocked in successfully.';
-
-      final refreshedShift = await _shiftRepository.getImminentShift(userId);
-      if (refreshedShift == null) {
-        emit(
-          state.copyWith(
-            status: ClockStatus.empty,
-            isSubmitting: false,
-            message: successMessage,
-            clearShift: true,
-            clearLog: true,
-          ),
-        );
-        return;
-      }
-
-      final refreshedLog =
-          await _shiftRepository.getShiftLog(refreshedShift.id, userId);
+      await _shiftRepository.clockIn(shift.id, userId);
+      final refreshedLog = await _shiftRepository.getShiftLog(shift.id, userId);
 
       emit(
         state.copyWith(
           status: ClockStatus.ready,
-          currentShift: refreshedShift,
           currentLog: refreshedLog,
           isSubmitting: false,
-          message: successMessage,
+          message: 'Clocked in successfully.',
         ),
       );
     } catch (error) {
@@ -154,5 +154,11 @@ class ClockCubit extends Cubit<ClockState> {
 
   void clearMessage() {
     emit(state.copyWith(clearMessage: true));
+  }
+
+  @override
+  Future<void> close() async {
+    await _logsSubscription.cancel();
+    return super.close();
   }
 }

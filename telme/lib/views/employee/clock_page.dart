@@ -109,13 +109,14 @@ class _ClockPageView extends StatelessWidget {
                         size: 80, color: theme.disabledColor),
                     const SizedBox(height: 24),
                     Text(
-                      'No shift starting soon.',
+                      'No upcoming shift is ready for clock-in.',
                       style: theme.textTheme.headlineSmall
                           ?.copyWith(color: theme.disabledColor),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'You can only clock in 10 minutes before your shift starts.',
+                      'This page only shows the next shift you can clock into.',
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -127,7 +128,7 @@ class _ClockPageView extends StatelessWidget {
 
         if (state.status == ClockStatus.failure) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Clock In/Out')),
+            appBar: AppBar(title: const Text('Clock In')),
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -157,7 +158,7 @@ class _ClockPageView extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Clock In/Out'),
+            title: const Text('Upcoming Shift'),
             leading: IconButton(
               icon: const Icon(Icons.close_rounded),
               onPressed: () => context.pop(),
@@ -169,18 +170,17 @@ class _ClockPageView extends StatelessWidget {
               children: [
                 const Spacer(),
                 _ShiftSummary(
-                    shiftTitle: shift.title,
-                    location: shift.location,
-                    timeLabel:
-                        '${DateFormat.jm().format(shift.startTime)} - ${DateFormat.jm().format(shift.endTime)}'),
+                  shiftTitle: shift.title,
+                  location: shift.location,
+                  dateLabel: DateFormat('EEEE, MMM d').format(shift.startTime),
+                  timeLabel:
+                      '${DateFormat.jm().format(shift.startTime)} - ${DateFormat.jm().format(shift.endTime)}',
+                ),
                 const SizedBox(height: 48),
-                if (!state.isClockedOut)
-                  _ClockButton(
-                    isClockedIn: state.isClockedIn,
-                    isSubmitting: state.isSubmitting,
-                  )
+                if (!state.isClockedIn)
+                  _ClockButton(isSubmitting: state.isSubmitting)
                 else
-                  _CompletedMessage(),
+                  const _ClockedInMessage(),
                 const Spacer(),
               ],
             ),
@@ -195,11 +195,13 @@ class _ShiftSummary extends StatelessWidget {
   const _ShiftSummary({
     required this.shiftTitle,
     required this.location,
+    required this.dateLabel,
     required this.timeLabel,
   });
 
   final String shiftTitle;
   final String location;
+  final String dateLabel;
   final String timeLabel;
 
   @override
@@ -210,6 +212,7 @@ class _ShiftSummary extends StatelessWidget {
       children: [
         Text(
           shiftTitle,
+          textAlign: TextAlign.center,
           style: theme.textTheme.headlineMedium
               ?.copyWith(fontWeight: FontWeight.bold),
         ),
@@ -219,6 +222,8 @@ class _ShiftSummary extends StatelessWidget {
           style: theme.textTheme.titleMedium
               ?.copyWith(color: theme.colorScheme.primary),
         ),
+        const SizedBox(height: 8),
+        Text(dateLabel, style: theme.textTheme.bodyLarge),
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -236,12 +241,8 @@ class _ShiftSummary extends StatelessWidget {
 }
 
 class _ClockButton extends StatelessWidget {
-  const _ClockButton({
-    required this.isClockedIn,
-    required this.isSubmitting,
-  });
+  const _ClockButton({required this.isSubmitting});
 
-  final bool isClockedIn;
   final bool isSubmitting;
 
   @override
@@ -251,21 +252,16 @@ class _ClockButton extends StatelessWidget {
     return GestureDetector(
       onTap: isSubmitting
           ? null
-          : () => context.read<ClockCubit>().submitClockAction(),
+          : () => context.read<ClockCubit>().submitClockIn(),
       child: Container(
         height: 200,
         width: 200,
         decoration: BoxDecoration(
-          color: isClockedIn
-              ? theme.colorScheme.secondary
-              : theme.colorScheme.primary,
+          color: theme.colorScheme.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: (isClockedIn
-                      ? theme.colorScheme.secondary
-                      : theme.colorScheme.primary)
-                  .withValues(alpha: 0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
               blurRadius: 20,
               spreadRadius: 10,
             ),
@@ -274,18 +270,14 @@ class _ClockButton extends StatelessWidget {
         child: Center(
           child: isSubmitting
               ? const CircularProgressIndicator(color: Colors.white)
-              : Column(
+              : const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      isClockedIn ? Icons.logout_rounded : Icons.login_rounded,
-                      size: 48,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 12),
+                    Icon(Icons.login_rounded, size: 48, color: Colors.white),
+                    SizedBox(height: 12),
                     Text(
-                      isClockedIn ? 'CLOCK OUT' : 'CLOCK IN',
-                      style: const TextStyle(
+                      'CLOCK IN',
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.2,
@@ -303,7 +295,9 @@ class _ClockButton extends StatelessWidget {
   }
 }
 
-class _CompletedMessage extends StatelessWidget {
+class _ClockedInMessage extends StatelessWidget {
+  const _ClockedInMessage();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -313,11 +307,17 @@ class _CompletedMessage extends StatelessWidget {
         const Icon(Icons.check_circle_rounded, size: 80, color: Colors.green),
         const SizedBox(height: 16),
         Text(
-          'Shift Completed',
+          'Clocked In',
           style: theme.textTheme.headlineSmall?.copyWith(
             color: Colors.green,
             fontWeight: FontWeight.bold,
           ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Your clock-in has been saved to Supabase.',
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
         ),
       ],
     );

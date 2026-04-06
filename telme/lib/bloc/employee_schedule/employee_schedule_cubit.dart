@@ -24,9 +24,19 @@ class EmployeeScheduleState extends Equatable {
   final List<ShiftLog> logs;
   final String? errorMessage;
 
-  List<Shift> get dailyShifts {
+  DateTime get weekStart {
+    return DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    ).subtract(Duration(days: selectedDate.weekday - 1));
+  }
+
+  DateTime get weekEnd => weekStart.add(const Duration(days: 6));
+
+  List<Shift> get weeklyShifts {
     final filtered = shifts
-        .where((shift) => _isSameDay(shift.startTime, selectedDate))
+        .where((shift) => _isShiftInWeek(shift.startTime, weekStart))
         .toList();
     filtered.sort((a, b) => a.startTime.compareTo(b.startTime));
     return filtered;
@@ -118,8 +128,11 @@ class EmployeeScheduleCubit extends Cubit<EmployeeScheduleState> {
   }
 }
 
-bool _isSameDay(DateTime first, DateTime second) {
-  return first.year == second.year &&
-      first.month == second.month &&
-      first.day == second.day;
+bool _isShiftInWeek(DateTime date, DateTime weekStart) {
+  final normalizedDate = DateTime(date.year, date.month, date.day);
+  final normalizedStart =
+      DateTime(weekStart.year, weekStart.month, weekStart.day);
+  final normalizedEnd = normalizedStart.add(const Duration(days: 6));
+  return !normalizedDate.isBefore(normalizedStart) &&
+      !normalizedDate.isAfter(normalizedEnd);
 }
