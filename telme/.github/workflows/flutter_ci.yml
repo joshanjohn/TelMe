@@ -10,6 +10,9 @@ on:
 jobs:
   analyze-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: telme
 
     steps:
       - name: Checkout repository
