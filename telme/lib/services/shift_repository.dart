@@ -6,95 +6,138 @@ import 'package:telme/models/shift_log_model.dart';
 
 class ShiftRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final Map<String, Stream<List<Shift>>> _myShiftStreams = {};
+  final Map<String, List<Shift>> _myShiftCache = {};
+  final Map<String, Stream<List<ShiftLog>>> _userLogStreams = {};
+  final Map<String, List<ShiftLog>> _userLogCache = {};
+  final Map<String, Stream<({Shift? shift, ShiftLog? log})>>
+      _nextClockableShiftStreams = {};
+  Stream<List<Shift>>? _adminShiftStream;
+  List<Shift> _adminShiftCache = const [];
 
   // Fetch all shifts with assignments
   Future<List<Shift>> getAllShifts() async {
-    final response =
-        await _supabase.from('detailed_shifts').select().order('start_time');
-    return (response as List).map((json) => Shift.fromJson(json)).toList();
+    if (_adminShiftCache.isNotEmpty) {
+      return _adminShiftCache;
+    }
+
+    final shifts = await _fetchDetailedShifts();
+    _adminShiftCache = shifts;
+    return shifts;
   }
 
   // Stream of only shifts assigned to a specific user
   Stream<List<Shift>> myShiftsStream(String userId) {
-    final assignmentStream = _supabase
-        .from('shift_assignments')
-        .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .map((rows) => rows.cast<Map<String, dynamic>>());
+    return _myShiftStreams.putIfAbsent(userId, () {
+      final assignmentStream = _supabase
+          .from('shift_assignments')
+          .stream(primaryKey: ['id'])
+          .eq('user_id', userId)
+          .map((rows) => rows.cast<Map<String, dynamic>>());
 
-    // Merge with a general shifts stream to catch updates to shift details (time, title, etc)
-    final shiftUpdateStream =
-        _supabase.from('shifts').stream(primaryKey: ['id']).map(
-      (rows) => rows.cast<Map<String, dynamic>>(),
-    );
+      final shiftUpdateStream = _supabase.from('shifts').stream(
+          primaryKey: ['id']).map((rows) => rows.cast<Map<String, dynamic>>());
 
-    return CombineLatestStream.combine2<List<Map<String, dynamic>>,
-        List<Map<String, dynamic>>, List<Map<String, dynamic>>>(
-      assignmentStream,
-      shiftUpdateStream,
-      (assignments, _) => assignments,
-    ).asyncMap<List<Shift>>((assignments) async {
-      try {
-        final ids =
-            assignments.map((a) => a['shift_id'] as String).toSet().toList();
-        if (ids.isEmpty) return <Shift>[];
+      final stream = CombineLatestStream.combine2<List<Map<String, dynamic>>,
+          List<Map<String, dynamic>>, List<Map<String, dynamic>>>(
+        assignmentStream,
+        shiftUpdateStream,
+        (assignments, _) => assignments,
+      ).asyncMap<List<Shift>>((assignments) async {
+        try {
+          final ids =
+              assignments.map((a) => a['shift_id'] as String).toSet().toList();
+          if (ids.isEmpty) {
+            return <Shift>[];
+          }
 
-        final response = await _supabase
-            .from('detailed_shifts')
-            .select()
-            .inFilter('id', ids)
-            .order('start_time')
-            .timeout(const Duration(seconds: 10));
+          return await _fetchDetailedShifts(ids: ids);
+        } catch (e) {
+          debugPrint('Assigned shifts stream error: $e');
+          return _myShiftCache[userId] ?? const <Shift>[];
+        }
+      }).map((shifts) {
+        _myShiftCache[userId] = shifts;
+        return shifts;
+      });
 
-        return (response as List).map((json) => Shift.fromJson(json)).toList();
-      } catch (e) {
-        debugPrint('Assigned shifts stream error: $e');
-        return [];
-      }
-    }).asBroadcastStream();
+      return stream.asBroadcastStream();
+    });
   }
 
   // Stream of all shifts for Admin
   Stream<List<Shift>> get shiftsStream {
-    final shiftStream = _supabase.from('shifts').stream(
-        primaryKey: ['id']).map((rows) => rows.cast<Map<String, dynamic>>());
-    final assignmentStream = _supabase.from('shift_assignments').stream(
-        primaryKey: ['id']).map((rows) => rows.cast<Map<String, dynamic>>());
-
-    return CombineLatestStream.combine2<List<Map<String, dynamic>>,
-        List<Map<String, dynamic>>, List<Map<String, dynamic>>>(
-      shiftStream,
-      assignmentStream,
+    return _adminShiftStream ??= CombineLatestStream.combine2<
+        List<Map<String, dynamic>>,
+        List<Map<String, dynamic>>,
+        List<Map<String, dynamic>>>(
+      _supabase.from('shifts').stream(
+          primaryKey: ['id']).map((rows) => rows.cast<Map<String, dynamic>>()),
+      _supabase.from('shift_assignments').stream(
+          primaryKey: ['id']).map((rows) => rows.cast<Map<String, dynamic>>()),
       (shifts, _) => shifts,
     ).asyncMap<List<Shift>>((data) async {
       try {
-        final ids = data.map((d) => d['id']).toList();
-        if (ids.isEmpty) return <Shift>[];
+        final ids = data.map((d) => d['id'] as String).toList();
+        if (ids.isEmpty) {
+          return <Shift>[];
+        }
 
-        final response = await _supabase
-            .from('detailed_shifts')
-            .select()
-            .inFilter('id', ids)
-            .order('start_time')
-            .timeout(const Duration(seconds: 10));
-
-        return (response as List).map((json) => Shift.fromJson(json)).toList();
+        return await _fetchDetailedShifts(ids: ids);
       } catch (e) {
         debugPrint('Admin shifts stream error: $e');
-        rethrow;
+        return _adminShiftCache;
       }
+    }).map((shifts) {
+      _adminShiftCache = shifts;
+      return shifts;
     }).asBroadcastStream();
   }
 
   // Stream of logs for a specific user
-  Stream<List<ShiftLog>> userLogsStream(String userId) => _supabase
-      .from('shift_logs')
-      .stream(primaryKey: ['id'])
-      .eq('user_id', userId)
-      .map((data) => data.map((json) => ShiftLog.fromJson(json)).toList())
-      .asBroadcastStream();
+  Stream<List<ShiftLog>> userLogsStream(String userId) {
+    return _userLogStreams.putIfAbsent(userId, () {
+      final stream = _supabase
+          .from('shift_logs')
+          .stream(primaryKey: ['id'])
+          .eq('user_id', userId)
+          .map((data) => data.map((json) => ShiftLog.fromJson(json)).toList())
+          .map((logs) {
+            _userLogCache[userId] = logs;
+            return logs;
+          });
+
+      return stream.asBroadcastStream();
+    });
+  }
+
+  Stream<({Shift? shift, ShiftLog? log})> watchNextClockableShift(
+      String userId) {
+    return _nextClockableShiftStreams.putIfAbsent(userId, () {
+      final stream = CombineLatestStream.combine2<List<Shift>, List<ShiftLog>,
+          ({Shift? shift, ShiftLog? log})>(
+        myShiftsStream(userId),
+        userLogsStream(userId),
+        (shifts, logs) => _resolveNextClockableShift(shifts, logs),
+      ).distinct((previous, next) =>
+          previous.shift?.id == next.shift?.id &&
+          previous.log?.clockIn == next.log?.clockIn &&
+          previous.log?.clockOut == next.log?.clockOut);
+
+      return stream.asBroadcastStream();
+    });
+  }
 
   Future<ShiftLog?> getShiftLog(String shiftId, String userId) async {
+    final cachedLogs = _userLogCache[userId];
+    if (cachedLogs != null) {
+      for (final log in cachedLogs) {
+        if (log.shiftId == shiftId) {
+          return log;
+        }
+      }
+    }
+
     final response = await _supabase
         .from('shift_logs')
         .select()
@@ -126,6 +169,8 @@ class ShiftRepository {
 
       await _supabase.from('shift_assignments').insert(assignments);
     }
+
+    _invalidateShiftCaches(employeeIds: employeeIds);
   }
 
   // Edit an existing shift
@@ -146,33 +191,26 @@ class ShiftRepository {
 
       await _supabase.from('shift_assignments').insert(assignments);
     }
+
+    _invalidateShiftCaches(employeeIds: employeeIds);
   }
 
   // Delete a shift
   Future<void> deleteShift(String shiftId) async {
     await _supabase.from('shifts').delete().eq('id', shiftId);
+    _invalidateShiftCaches();
   }
 
   Future<Shift?> getImminentShift(String userId) async {
-    final now = DateTime.now();
-    final shifts =
-        await _supabase.from('detailed_shifts').select().order('start_time');
-
-    final mappedShifts = (shifts as List)
-        .map((json) => Shift.fromJson(json))
-        .where((s) => s.assignedEmployees.any((p) => p.id == userId))
-        .toList();
-
-    try {
-      return mappedShifts.firstWhere((s) {
-        final diff = s.startTime.difference(now).inMinutes;
-        // Shift starts in less than 10 mins OR has already started but not ended yet
-        return (diff <= 10 && diff >= -60) ||
-            (now.isAfter(s.startTime) && now.isBefore(s.endTime));
-      });
-    } catch (_) {
-      return null;
+    final cachedShifts = _myShiftCache[userId];
+    final cachedLogs = _userLogCache[userId];
+    if (cachedShifts != null && cachedLogs != null) {
+      return _resolveNextClockableShift(cachedShifts, cachedLogs).shift;
     }
+
+    final shifts = await _fetchMyShifts(userId);
+    final logs = await userLogsStream(userId).first;
+    return _resolveNextClockableShift(shifts, logs).shift;
   }
 
   Future<void> clockIn(String shiftId, String userId) async {
@@ -190,6 +228,8 @@ class ShiftRepository {
       'user_id': userId,
       'clock_in': now.toIso8601String(),
     });
+
+    _invalidateLogCache(userId);
   }
 
   Future<void> clockOut(String shiftId, String userId) async {
@@ -205,11 +245,79 @@ class ShiftRepository {
     await _supabase.from('shift_logs').update({
       'clock_out': now.toIso8601String(),
     }).match({'shift_id': shiftId, 'user_id': userId});
+
+    _invalidateLogCache(userId);
   }
 
   Future<Shift> getShiftById(String id) async {
     final response =
         await _supabase.from('detailed_shifts').select().eq('id', id).single();
     return Shift.fromJson(response);
+  }
+
+  Future<List<Shift>> _fetchMyShifts(String userId) async {
+    final response = await _supabase
+        .from('shift_assignments')
+        .select('shift_id')
+        .eq('user_id', userId);
+
+    final ids = (response as List)
+        .map((item) => item['shift_id'] as String)
+        .toSet()
+        .toList();
+
+    final shifts = await _fetchDetailedShifts(ids: ids);
+    _myShiftCache[userId] = shifts;
+    return shifts;
+  }
+
+  Future<List<Shift>> _fetchDetailedShifts({List<String>? ids}) async {
+    final query = _supabase.from('detailed_shifts').select();
+    final response = ids == null || ids.isEmpty
+        ? await query.order('start_time').timeout(const Duration(seconds: 10))
+        : await query
+            .inFilter('id', ids)
+            .order('start_time')
+            .timeout(const Duration(seconds: 10));
+
+    return (response as List).map((json) => Shift.fromJson(json)).toList();
+  }
+
+  ({Shift? shift, ShiftLog? log}) _resolveNextClockableShift(
+    List<Shift> shifts,
+    List<ShiftLog> logs,
+  ) {
+    final logsByShift = <String, ShiftLog>{
+      for (final log in logs) log.shiftId: log,
+    };
+    final now = DateTime.now();
+
+    Shift? bestShift;
+    ShiftLog? bestLog;
+
+    for (final shift in [...shifts]
+      ..sort((a, b) => a.startTime.compareTo(b.startTime))) {
+      final log = logsByShift[shift.id];
+      if (log?.clockIn != null || shift.endTime.isBefore(now)) {
+        continue;
+      }
+
+      bestShift = shift;
+      bestLog = log;
+      break;
+    }
+
+    return (shift: bestShift, log: bestLog);
+  }
+
+  void _invalidateShiftCaches({List<String> employeeIds = const []}) {
+    _adminShiftCache = const [];
+    for (final userId in employeeIds) {
+      _myShiftCache.remove(userId);
+    }
+  }
+
+  void _invalidateLogCache(String userId) {
+    _userLogCache.remove(userId);
   }
 }

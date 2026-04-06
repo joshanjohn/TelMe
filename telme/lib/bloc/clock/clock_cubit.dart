@@ -62,32 +62,41 @@ class ClockCubit extends Cubit<ClockState> {
     required this.userId,
   })  : _shiftRepository = shiftRepository,
         super(const ClockState(status: ClockStatus.loading)) {
-    _logsSubscription = _shiftRepository.userLogsStream(userId).listen(
-      (logs) {
-        final shiftId = state.currentShift?.id;
-        if (shiftId == null) {
+    _nextShiftSubscription =
+        _shiftRepository.watchNextClockableShift(userId).listen(
+      (data) {
+        if (state.status == ClockStatus.success) {
           return;
         }
 
-        ShiftLog? matchingLog;
-        for (final log in logs) {
-          if (log.shiftId == shiftId) {
-            matchingLog = log;
-            break;
-          }
+        if (data.shift == null) {
+          emit(
+            state.copyWith(
+              status: ClockStatus.empty,
+              clearShift: true,
+              clearLog: true,
+            ),
+          );
+          return;
         }
 
-        if (matchingLog != state.currentLog) {
-          emit(state.copyWith(
-              currentLog: matchingLog, clearLog: matchingLog == null));
-        }
+        emit(
+          state.copyWith(
+            status: ClockStatus.ready,
+            currentShift: data.shift,
+            currentLog: data.log,
+            isSubmitting: false,
+            clearMessage: true,
+          ),
+        );
       },
     );
   }
 
   final ShiftRepository _shiftRepository;
   final String userId;
-  late final StreamSubscription<List<ShiftLog>> _logsSubscription;
+  late final StreamSubscription<({Shift? shift, ShiftLog? log})>
+      _nextShiftSubscription;
 
   Future<void> load() async {
     emit(state.copyWith(
@@ -98,9 +107,9 @@ class ClockCubit extends Cubit<ClockState> {
     ));
 
     try {
-      final shift = await _shiftRepository.getImminentShift(userId);
-
-      if (shift == null) {
+      final snapshot =
+          await _shiftRepository.watchNextClockableShift(userId).first;
+      if (snapshot.shift == null) {
         emit(
           state.copyWith(
             status: ClockStatus.empty,
@@ -111,12 +120,11 @@ class ClockCubit extends Cubit<ClockState> {
         return;
       }
 
-      final log = await _shiftRepository.getShiftLog(shift.id, userId);
       emit(
         state.copyWith(
           status: ClockStatus.ready,
-          currentShift: shift,
-          currentLog: log,
+          currentShift: snapshot.shift,
+          currentLog: snapshot.log,
           isSubmitting: false,
           clearSuccessTitle: true,
         ),
@@ -180,7 +188,7 @@ class ClockCubit extends Cubit<ClockState> {
 
   @override
   Future<void> close() async {
-    await _logsSubscription.cancel();
+    await _nextShiftSubscription.cancel();
     return super.close();
   }
 }
