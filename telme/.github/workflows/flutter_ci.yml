@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: telme
+        working-directory: telme/telme
 
     steps:
       - name: Checkout repository
